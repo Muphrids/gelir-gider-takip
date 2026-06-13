@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#2563eb" />
+    <meta name="background-color" content="#ffffff" />
+    <meta name="description" content="Kişisel finans yöneticiniz - Gelir ve giderlerinizi kolayca takip edin" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Gelir Gider" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="application-name" content="Gelir Gider Takip" />
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="72x72" href="/icon-72x72.png" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/icon-96x96.png" />
+    <link rel="icon" type="image/png" sizes="128x128" href="/icon-128x128.png" />
+    <link rel="icon" type="image/png" sizes="144x144" href="/icon-144x144.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="72x72" href="/icon-72x72.png" />
+    <link rel="apple-touch-icon" sizes="96x96" href="/icon-96x96.png" />
+    <link rel="apple-touch-icon" sizes="128x128" href="/icon-128x128.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/icon-144x144.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon-152x152.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="/icon-192x192.png" />
+    <link rel="apple-touch-icon" sizes="384x384" href="/icon-384x384.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="/icon-512x512.png" />
+    
+    <!-- Splash Screen for iOS -->
+    <link rel="apple-touch-startup-image" href="/icon-512x512.png" />
+    
+    <title>Gelir Gider Takip</title>
+    
+    <style>
+      /* Prevent pull-to-refresh on mobile */
+      body {
+        overscroll-behavior-y: none;
+        -webkit-tap-highlight-color: transparent;
+      }
+      
+      /* Smooth scrolling */
+      html {
+        scroll-behavior: smooth;
+        -webkit-text-size-adjust: 100%;
+      }
+      
+      /* Hide scrollbar but keep functionality */
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      
+      ::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+      }
+      
+      /* Prevent text selection on UI elements */
+      button, .no-select {
+        -webkit-user-select: none;
+        user-select: none;
+      }
+      
+      /* Fix for iOS input zoom */
+      @media screen and (max-width: 768px) {
+        input, select, textarea {
+          font-size: 16px !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker: dev ortamında kapalı (OAuth dönüşünü bozabilir) -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        const isLocalDev =
+          location.hostname === 'localhost' ||
+          location.hostname === '127.0.0.1' ||
+          location.protocol === 'file:';
+
+        if (isLocalDev) {
+          navigator.serviceWorker.getRegistrations().then((regs) => {
+            regs.forEach((reg) => reg.unregister());
+          });
+        } else {
+          window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js').catch(() => {});
+          });
+        }
+      }
+    </script>
+  </body>
+</html>
