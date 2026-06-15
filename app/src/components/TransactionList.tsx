@@ -40,6 +40,8 @@ interface TransactionListProps {
   onDelete: (id: string) => void;
   onUpdate?: (id: string, updates: Partial<Transaction>) => void;
   title?: string;
+  activeCurrency?: string;
+  exchangeRates?: Record<string, number>;
 }
 
 export function TransactionList({
@@ -50,6 +52,8 @@ export function TransactionList({
   onDelete,
   onUpdate,
   title = 'İşlemler',
+  activeCurrency = 'TRY',
+  exchangeRates = { TRY: 1, USD: 33.0, EUR: 35.5 },
 }: TransactionListProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,6 +66,14 @@ export function TransactionList({
   const [editDate, setEditDate] = useState('');
   const [editType, setEditType] = useState<'income' | 'expense'>('expense');
   const [editPaymentMethod, setEditPaymentMethod] = useState<'cash' | 'credit_card' | 'none'>('none');
+  const [editCurrency, setEditCurrency] = useState('TRY');
+
+  const convertAmount = (amount: number, from: string = 'TRY', to: string = 'TRY') => {
+    if (!exchangeRates) return amount;
+    const fromRate = exchangeRates[from] || 1;
+    const toRate = exchangeRates[to] || 1;
+    return (amount * fromRate) / toRate;
+  };
 
   const getCategory = (categoryId: string) => {
     return categories.find(c => c.id === categoryId);
@@ -92,6 +104,7 @@ export function TransactionList({
     setEditDate(t.date);
     setEditType(t.type);
     setEditPaymentMethod(t.paymentMethod || 'none');
+    setEditCurrency(t.currency || 'TRY');
   };
 
   const handleSaveEdit = (e: React.FormEvent) => {
@@ -106,6 +119,7 @@ export function TransactionList({
         type: editType,
         date: editDate,
         paymentMethod: editPaymentMethod === 'none' ? undefined : editPaymentMethod,
+        currency: editCurrency,
       });
     }
     setEditTransaction(null);
@@ -268,14 +282,21 @@ export function TransactionList({
                         </div>
                       </TableCell>
                       <TableCell className="text-right">
-                        <span
-                          className={`font-semibold ${
-                            isIncome ? 'text-green-600' : 'text-red-600'
-                          }`}
-                        >
-                          {isIncome ? '+' : '-'}
-                          {formatCurrency(transaction.amount)}
-                        </span>
+                        <div className="flex flex-col items-end">
+                          <span
+                            className={`font-semibold whitespace-nowrap ${
+                              isIncome ? 'text-green-600' : 'text-red-600'
+                            }`}
+                          >
+                            {isIncome ? '+' : '-'}
+                            {formatCurrency(transaction.amount, transaction.currency || 'TRY')}
+                          </span>
+                          {transaction.currency && transaction.currency !== activeCurrency && (
+                            <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium mt-0.5 whitespace-nowrap">
+                              ({isIncome ? '+' : '-'}{formatCurrency(convertAmount(transaction.amount, transaction.currency, activeCurrency), activeCurrency)})
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center justify-end gap-1">
@@ -348,23 +369,38 @@ export function TransactionList({
               </Button>
             </div>
 
-            {/* Amount */}
-            <div className="space-y-2">
-              <Label htmlFor="edit-amount">Tutar</Label>
-              <div className="relative">
-                <Input
-                  id="edit-amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={editAmount}
-                  onChange={(e) => setEditAmount(e.target.value)}
-                  className="pl-10"
-                  required
-                />
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                  {getCurrencySymbol()}
-                </span>
+            {/* Amount & Currency */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-2 space-y-2">
+                <Label htmlFor="edit-amount">Tutar</Label>
+                <div className="relative">
+                  <Input
+                    id="edit-amount"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={editAmount}
+                    onChange={(e) => setEditAmount(e.target.value)}
+                    className="pl-10 text-foreground"
+                    required
+                  />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                    {getCurrencySymbol(editCurrency)}
+                  </span>
+                </div>
+              </div>
+              <div className="col-span-1 space-y-2">
+                <Label htmlFor="edit-currency">Döviz</Label>
+                <Select value={editCurrency} onValueChange={setEditCurrency} required>
+                  <SelectTrigger id="edit-currency">
+                    <SelectValue placeholder="Döviz" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="TRY">TRY (₺)</SelectItem>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

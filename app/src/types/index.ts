@@ -20,6 +20,7 @@ export interface Transaction {
   updatedAt: string;
   projectId?: string; // Optional project/company association
   paymentMethod?: 'cash' | 'credit_card';
+  currency?: string; // e.g. 'TRY', 'USD', 'EUR'
 }
 
 export interface RecurringTransaction {
@@ -35,6 +36,7 @@ export interface RecurringTransaction {
   updatedAt: string;
   projectId?: string;
   paymentMethod?: 'cash' | 'credit_card';
+  currency?: string; // e.g. 'TRY', 'USD', 'EUR'
 }
 
 export interface Project {

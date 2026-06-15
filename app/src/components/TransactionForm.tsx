@@ -20,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 interface TransactionFormProps {
   categories: Category[];
   transactions: Transaction[];
+  activeCurrency?: string;
   onSubmit: (data: {
     amount: number;
     description: string;
@@ -27,6 +28,7 @@ interface TransactionFormProps {
     type: TransactionType;
     date: string;
     paymentMethod?: 'cash' | 'credit_card';
+    currency?: string;
   }) => void;
 }
 
@@ -46,7 +48,7 @@ function safeEvaluateMath(expression: string): number | null {
   return null;
 }
 
-export function TransactionForm({ categories, transactions, onSubmit }: TransactionFormProps) {
+export function TransactionForm({ categories, transactions, activeCurrency = 'TRY', onSubmit }: TransactionFormProps) {
   const [type, setType] = useState<TransactionType>('income');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -54,6 +56,11 @@ export function TransactionForm({ categories, transactions, onSubmit }: Transact
   const [date, setDate] = useState(getToday());
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit_card' | 'none'>('none');
   const [pendingCategoryId, setPendingCategoryId] = useState<string | null>(null);
+  const [currency, setCurrency] = useState(activeCurrency);
+
+  useEffect(() => {
+    setCurrency(activeCurrency);
+  }, [activeCurrency]);
 
   useEffect(() => {
     if (pendingCategoryId) {
@@ -127,6 +134,7 @@ export function TransactionForm({ categories, transactions, onSubmit }: Transact
       type,
       date,
       paymentMethod: (paymentMethod && paymentMethod !== 'none') ? paymentMethod : undefined,
+      currency,
     });
 
     // Reset form
@@ -223,37 +231,52 @@ export function TransactionForm({ categories, transactions, onSubmit }: Transact
             </div>
           )}
 
-          {/* Amount */}
-          <div className="space-y-2">
-            <Label htmlFor="amount">Tutar</Label>
-            <div className="relative group">
-              <Input
-                id="amount"
-                type="text"
-                placeholder="0.00 veya 100+50-20..."
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                onBlur={handleAmountBlur}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    handleAmountBlur();
-                  }
-                }}
-                className="pl-10 pr-24 text-foreground"
-                required
-              />
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium select-none pointer-events-none">
-                {getCurrencySymbol()}
-              </span>
-              {/[+\-*/()]/.test(amount) && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded border border-green-200 dark:border-green-800/30 transition-all select-none pointer-events-none">
-                  {(() => {
-                    const res = safeEvaluateMath(amount);
-                    return res !== null ? `= ${res} ${getCurrencySymbol()}` : '?';
-                  })()}
+          {/* Amount & Currency */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="col-span-2 space-y-2">
+              <Label htmlFor="amount">Tutar</Label>
+              <div className="relative group">
+                <Input
+                  id="amount"
+                  type="text"
+                  placeholder="0.00 veya 100+50-20..."
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  onBlur={handleAmountBlur}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      handleAmountBlur();
+                    }
+                  }}
+                  className="pl-10 pr-24 text-foreground"
+                  required
+                />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium select-none pointer-events-none">
+                  {getCurrencySymbol(currency)}
                 </span>
-              )}
+                {/[+\-*/()]/.test(amount) && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-semibold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30 px-2 py-0.5 rounded border border-green-200 dark:border-green-800/30 transition-all select-none pointer-events-none">
+                    {(() => {
+                      const res = safeEvaluateMath(amount);
+                      return res !== null ? `= ${res} ${getCurrencySymbol(currency)}` : '?';
+                    })()}
+                  </span>
+                )}
+              </div>
+            </div>
+            <div className="col-span-1 space-y-2">
+              <Label htmlFor="currency">Döviz</Label>
+              <Select value={currency} onValueChange={setCurrency} required>
+                <SelectTrigger id="currency">
+                  <SelectValue placeholder="Döviz" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TRY">TRY (₺)</SelectItem>
+                  <SelectItem value="USD">USD ($)</SelectItem>
+                  <SelectItem value="EUR">EUR (€)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 

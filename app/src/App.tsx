@@ -44,6 +44,7 @@ import {
   getToday,
   formatCurrency,
   getCurrencySymbol,
+  downloadTransactionsCSV,
 } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { 
@@ -58,7 +59,8 @@ import {
   Printer,
   Trash2,
   Plus,
-  Sparkles
+  Sparkles,
+  Download
 } from 'lucide-react';
 import { PrintReport } from '@/components/PrintReport';
 
@@ -67,7 +69,7 @@ const PRESET_COLORS = [
   '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899',
 ];
 
-const CURRENT_VERSION = 'v1.1.3';
+const CURRENT_VERSION = 'v1.1.4';
 
 function App() {
   const { user: authUser, status: authStatus, error: authError, signInWithGoogle, signOut } = useAuth();
@@ -170,6 +172,38 @@ function App() {
 
   // Dynamic currency setting
   const [currency, setCurrencyState] = useState(() => localStorage.getItem('gelir-gider-currency') || 'TRY');
+
+  // Exchange rates state (relative to TRY - stores the value of 1 unit of foreign currency in TRY)
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({
+    TRY: 1,
+    USD: 33.0,
+    EUR: 35.5,
+    GBP: 42.0,
+  });
+
+  // Fetch live exchange rates relative to TRY
+  useEffect(() => {
+    fetch('https://open.er-api.com/v6/latest/TRY')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.rates) {
+          const tryToUsd = data.rates.USD;
+          const tryToEur = data.rates.EUR;
+          const tryToGbp = data.rates.GBP;
+          if (tryToUsd && tryToEur) {
+            setExchangeRates({
+              TRY: 1,
+              USD: 1 / tryToUsd,
+              EUR: 1 / tryToEur,
+              GBP: tryToGbp ? 1 / tryToGbp : 42.0,
+            });
+          }
+        }
+      })
+      .catch((err) => {
+        console.error('Döviz kurları API bağlantı hatası, varsayılan kurlar kullanılıyor:', err);
+      });
+  }, []);
 
   // Sync isLocked with isDecrypted and isPasswordRequired
   useEffect(() => {
@@ -617,26 +651,81 @@ function App() {
     return data.projects.find(p => p.id === selectedProject)?.name || 'Tüm Şirketler';
   }, [data.projects, selectedProject]);
 
+  // Convert all transactions to the selected default currency
+  const allTransactionsConverted = useMemo(() => {
+    return data.transactions.map(t => {
+      if (!t.currency || t.currency === currency) {
+        return t;
+      }
+      const fromRate = exchangeRates[t.currency] || 1;
+      const toRate = exchangeRates[currency] || 1;
+      const convertedAmount = (t.amount * fromRate) / toRate;
+      return {
+        ...t,
+        amount: Math.round(convertedAmount * 100) / 100
+      };
+    });
+  }, [data.transactions, currency, exchangeRates]);
+
+  // Convert all recurring transactions to the selected default currency
+  const allRecurringTransactionsConverted = useMemo(() => {
+    return data.recurringTransactions.map(r => {
+      if (!r.currency || r.currency === currency) {
+        return r;
+      }
+      const fromRate = exchangeRates[r.currency] || 1;
+      const toRate = exchangeRates[currency] || 1;
+      const convertedAmount = (r.amount * fromRate) / toRate;
+      return {
+        ...r,
+        amount: Math.round(convertedAmount * 100) / 100
+      };
+    });
+  }, [data.recurringTransactions, currency, exchangeRates]);
+
+  // Convert filtered transactions to the selected default currency for calculations
+  const filteredTransactionsConverted = useMemo(() => {
+    return filteredTransactions.map(t => {
+      if (!t.currency || t.currency === currency) {
+        return t;
+      }
+      const fromRate = exchangeRates[t.currency] || 1;
+      const toRate = exchangeRates[currency] || 1;
+      const convertedAmount = (t.amount * fromRate) / toRate;
+      return {
+        ...t,
+        amount: Math.round(convertedAmount * 100) / 100
+      };
+    });
+  }, [filteredTransactions, currency, exchangeRates]);
+
+  const currentBalanceConverted = useMemo(() => {
+    const txList = selectedProject 
+      ? allTransactionsConverted.filter(t => t.projectId === selectedProject)
+      : allTransactionsConverted;
+    return txList.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0);
+  }, [allTransactionsConverted, selectedProject]);
+
   // Calculate totals
   const { totalIncome, totalExpense, balance } = useMemo(() => {
-    return calculateTotals(filteredTransactions);
-  }, [filteredTransactions]);
+    return calculateTotals(filteredTransactionsConverted);
+  }, [filteredTransactionsConverted]);
 
   // Calculate category summaries
   const incomeCategorySummary = useMemo(() => {
-    return calculateCategorySummary(filteredTransactions, data.categories, 'income');
-  }, [filteredTransactions, data.categories]);
+    return calculateCategorySummary(filteredTransactionsConverted, data.categories, 'income');
+  }, [filteredTransactionsConverted, data.categories]);
 
   const expenseCategorySummary = useMemo(() => {
-    return calculateCategorySummary(filteredTransactions, data.categories, 'expense');
-  }, [filteredTransactions, data.categories]);
+    return calculateCategorySummary(filteredTransactionsConverted, data.categories, 'expense');
+  }, [filteredTransactionsConverted, data.categories]);
 
   // Calculate company summaries (only when selectedProject is null and we have projects)
   const companySummary = useMemo(() => {
     if (selectedProject !== null || data.projects.length === 0) return [];
     
     const summaries = data.projects.map(project => {
-      const projTransactions = filteredTransactions.filter(t => t.projectId === project.id);
+      const projTransactions = filteredTransactionsConverted.filter(t => t.projectId === project.id);
       const income = projTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
       const expense = projTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
       return {
@@ -651,7 +740,7 @@ function App() {
     });
 
     // Also calculate for "Genel" (transactions without a project)
-    const generalTransactions = filteredTransactions.filter(t => !t.projectId);
+    const generalTransactions = filteredTransactionsConverted.filter(t => !t.projectId);
     const generalIncome = generalTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
     const generalExpense = generalTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
     
@@ -668,7 +757,7 @@ function App() {
     }
 
     return summaries.filter(s => s.transactionCount > 0);
-  }, [data.projects, filteredTransactions, selectedProject]);
+  }, [data.projects, filteredTransactionsConverted, selectedProject]);
 
   // Handle transaction add
   const handleAddTransaction = (transactionData: {
@@ -677,11 +766,13 @@ function App() {
     categoryId: string;
     type: 'income' | 'expense';
     date: string;
+    paymentMethod?: 'cash' | 'credit_card';
+    currency?: string;
   }) => {
     addTransaction({ ...transactionData, projectId: selectedProject || undefined });
     const typeText = transactionData.type === 'income' ? 'Gelir' : 'Gider';
     toast.success(`${typeText} başarıyla eklendi`, {
-      description: `${formatCurrency(transactionData.amount)} - ${transactionData.description || 'Açıklama yok'}`,
+      description: `${formatCurrency(transactionData.amount, transactionData.currency)} - ${transactionData.description || 'Açıklama yok'}`,
     });
   };
 
@@ -694,6 +785,8 @@ function App() {
     startDate: string;
     endDate?: string;
     isActive: boolean;
+    paymentMethod?: 'cash' | 'credit_card';
+    currency?: string;
   }) => {
     addRecurringTransaction({ ...recurringData, projectId: selectedProject || undefined });
     toast.success('Sabit işlem eklendi', {
@@ -1158,7 +1251,7 @@ function App() {
 
             {/* Budget Progress limits */}
             <BudgetProgress
-              transactions={data.transactions}
+              transactions={allTransactionsConverted}
               categories={data.categories}
               selectedDate={selectedDate}
               projectId={selectedProject}
@@ -1170,10 +1263,12 @@ function App() {
                 <TransactionForm
                   categories={data.categories}
                   transactions={data.transactions}
+                  activeCurrency={currency}
                   onSubmit={handleAddTransaction}
                 />
                 <RecurringTransactionForm
                   categories={data.categories}
+                  activeCurrency={currency}
                   onSubmit={handleAddRecurring}
                 />
               </div>
@@ -1187,6 +1282,8 @@ function App() {
                   showProjectBadge={selectedProject === null}
                   onDelete={handleDeleteTransaction}
                   onUpdate={updateTransaction}
+                  activeCurrency={currency}
+                  exchangeRates={exchangeRates}
                   title={useCustomRange 
                     ? 'Seçili Dönem İşlemleri' 
                     : viewMode === 'daily' 
@@ -1223,6 +1320,7 @@ function App() {
                     <TransactionForm
                       categories={data.categories}
                       transactions={data.transactions}
+                      activeCurrency={currency}
                       onSubmit={(val) => {
                         handleAddTransaction(val);
                         setIsMobileFormOpen(false);
@@ -1232,6 +1330,7 @@ function App() {
                   <TabsContent value="recurring" className="mt-0">
                     <RecurringTransactionForm
                       categories={data.categories}
+                      activeCurrency={currency}
                       onSubmit={(val) => {
                         handleAddRecurring(val);
                         setIsMobileFormOpen(false);
@@ -1496,29 +1595,37 @@ function App() {
 
             <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center bg-slate-50/50 dark:bg-slate-800/10 p-4 rounded-xl border dark:border-white/5">
               <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                Bu döneme ait mali verileri yüksek çözünürlüklü A4 PDF belgesi olarak indirin veya yazdırın.
+                Bu döneme ait mali verileri yüksek çözünürlüklü A4 PDF belgesi veya Türkçe karakter uyumlu Excel/CSV tablosu olarak indirin.
               </span>
-              <Button onClick={() => window.print()} size="sm" className="flex items-center gap-1.5 font-bold cursor-pointer shrink-0">
-                <Printer className="w-4 h-4" />
-                PDF Raporu Oluştur (Yazdır)
-              </Button>
+              <div className="flex items-center gap-2 flex-wrap shrink-0">
+                <Button 
+                  onClick={() => downloadTransactionsCSV(filteredTransactions, data.categories, data.projects)} 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-1.5 font-bold cursor-pointer"
+                >
+                  <Download className="w-4 h-4" />
+                  Excel (CSV) Raporu İndir
+                </Button>
+                <Button onClick={() => window.print()} size="sm" className="flex items-center gap-1.5 font-bold cursor-pointer">
+                  <Printer className="w-4 h-4" />
+                  PDF Raporu Oluştur (Yazdır)
+                </Button>
+              </div>
             </div>
 
             {/* Monthly Trend Chart */}
             <MonthlyComparisonChart
-              transactions={data.transactions}
+              transactions={allTransactionsConverted}
               selectedDate={selectedDate}
               projectId={selectedProject}
             />
 
             {/* Cash Flow Forecast Chart */}
             <CashFlowForecastChart
-              recurringTransactions={selectedProject ? data.recurringTransactions.filter(r => r.projectId === selectedProject) : data.recurringTransactions}
-              transactions={selectedProject ? data.transactions.filter(t => t.projectId === selectedProject) : data.transactions}
-              currentBalance={selectedProject 
-                ? data.transactions.filter(t => t.projectId === selectedProject).reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0)
-                : data.transactions.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0)
-              }
+              recurringTransactions={selectedProject ? allRecurringTransactionsConverted.filter(r => r.projectId === selectedProject) : allRecurringTransactionsConverted}
+              transactions={selectedProject ? allTransactionsConverted.filter(t => t.projectId === selectedProject) : allTransactionsConverted}
+              currentBalance={currentBalanceConverted}
               selectedDate={selectedDate}
               savingsGoals={selectedProject ? (data.savingsGoals || []).filter(g => g.projectId === selectedProject) : (data.savingsGoals || [])}
             />
@@ -1859,7 +1966,7 @@ function App() {
       </footer>
 
       <PrintReport
-        transactions={filteredTransactions}
+        transactions={filteredTransactionsConverted}
         categories={data.categories}
         selectedProjectName={selectedProjectName}
         dateLabel={dateLabel}
@@ -1875,60 +1982,60 @@ function App() {
               <Sparkles className="h-6 w-6" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-bold tracking-tight text-foreground dark:text-white">Yeni Güncelleme: v1.1.3</DialogTitle>
+              <DialogTitle className="text-xl font-bold tracking-tight text-foreground dark:text-white">Yeni Güncelleme: v1.1.4</DialogTitle>
               <p className="text-xs text-muted-foreground mt-0.5">Gelir Gider Takip yenilendi!</p>
             </div>
           </DialogHeader>
           <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-1">
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Uygulamamızı daha kararlı, güvenli ve mobil dostu hale getirmek için yeni özellikler ve hata düzeltmeleri ekledik. İşte v1.1.3 nihai sürümüyle gelen yenilikler:
+              Uygulamamıza çoklu para birimi ve gelişmiş Excel/CSV raporlama özelliklerini getirdik. İşte v1.1.4 sürümüyle gelen yenilikler:
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               <div className="p-4 rounded-xl bg-secondary/40 border border-border/60 dark:bg-slate-800/40 dark:border-white/5 hover:border-blue-500/30 transition-all">
                 <div className="flex items-center gap-2 font-semibold text-sm mb-1.5 text-blue-500">
-                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-ping"></span>
-                  Gelişmiş Zaman Damgalı Eşitleme
+                  <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                  Çoklu Para Birimi Desteği
                 </div>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Zaman damgası (Timestamp) tabanlı yeni akıllı eşitleme algoritması sayesinde cihazlar arası veri çakışmaları ve eski verinin üzerine yazılması engellendi.
+                  İşlem bazlı döviz seçimi (TRY, USD, EUR) eklendi. Tüm finansal özetleriniz, grafikleriniz ve öngörüleriniz otomatik olarak seçtiğiniz varsayılan para biriminde hesaplanır.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-secondary/40 border border-border/60 dark:bg-slate-800/40 dark:border-white/5 hover:border-emerald-500/30 transition-all">
                 <div className="flex items-center gap-2 font-semibold text-sm mb-1.5 text-emerald-500">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  Canlı Eşitleme Göstergesi
+                  Canlı Döviz Kurları
                 </div>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Uygulama başlığına eklenen dinamik bulut simgesiyle; çevrimdışı durum, senkronizasyon aşaması ve güncellik bilgileri anlık olarak takip edilebilir.
+                  Uygulama açılışında en güncel kurlar internet üzerinden otomatik çekilir, böylece anlık ve doğru bakiye çevrimleri yapılır. Çevrimdışı çalışırken ise güvenli varsayılan kurlar kullanılır.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-secondary/40 border border-border/60 dark:bg-slate-800/40 dark:border-white/5 hover:border-violet-500/30 transition-all">
                 <div className="flex items-center gap-2 font-semibold text-sm mb-1.5 text-violet-500">
                   <span className="w-2 h-2 rounded-full bg-violet-500"></span>
-                  Mobil APK Güncelleme Kontrolü
+                  Excel (CSV) Dışa Aktarım
                 </div>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Android cihazlarda yeni bir sürüm çıktığında sistem bunu otomatik algılar, güncelleme notlarını sunar ve doğrudan son sürüm APK'yı indirtir.
+                  Raporlar sekmesinden tüm işlem dökümlerinizi Türkçe karakter ve UTF-8 BOM uyumlu olarak Excel'e (CSV) tek tıkla aktarabilirsiniz.
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-secondary/40 border border-border/60 dark:bg-slate-800/40 dark:border-white/5 hover:border-amber-500/30 transition-all">
                 <div className="flex items-center gap-2 font-semibold text-sm mb-1.5 text-amber-500">
                   <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                  Arayüz & Kullanılabilirlik Cila
+                  Hata Düzeltmeleri & Grafik Düzeltimi
                 </div>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Mobil FAB "+ İşlem Ekle" butonu, mobil uyumlu Çek/Senet dikey kart görünümleri ve form katlanabilirlik özellikleri nihai sürüme göre cilalandı.
+                  Kasa akışı simülasyon grafiğindeki görsel kesik çizgi hatası giderildi, şablon hedeflerinin filtre senkronizasyonu mükemmelleştirildi.
                 </p>
               </div>
             </div>
           </div>
           <div className="pt-4 border-t border-border dark:border-white/10 flex justify-end">
             <Button onClick={handleCloseChangelog} className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-xl transition-all">
-              Harika, Başlayalım!
+              Harika, Keşfedelim!
             </Button>
           </div>
         </DialogContent>

@@ -8,8 +8,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatCurrency(amount: number): string {
-  const currency = localStorage.getItem('gelir-gider-currency') || 'TRY';
+export function formatCurrency(amount: number, currencyParam?: string): string {
+  const currency = currencyParam || localStorage.getItem('gelir-gider-currency') || 'TRY';
   let locale = 'tr-TR';
   if (currency === 'USD') locale = 'en-US';
   else if (currency === 'EUR') locale = 'de-DE';
@@ -22,8 +22,8 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function getCurrencySymbol(): string {
-  const currency = localStorage.getItem('gelir-gider-currency') || 'TRY';
+export function getCurrencySymbol(currencyParam?: string): string {
+  const currency = currencyParam || localStorage.getItem('gelir-gider-currency') || 'TRY';
   switch (currency) {
     case 'USD': return '$';
     case 'EUR': return '€';
@@ -214,4 +214,46 @@ export function groupTransactionsByDate(transactions: Transaction[]): Map<string
 
 export function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+}
+
+export function downloadTransactionsCSV(
+  transactions: Transaction[],
+  categories: Category[],
+  projects: any[]
+) {
+  const headers = ['Tarih', 'Tür', 'Tutar', 'Para Birimi', 'Kategori', 'Şirket/Proje', 'Ödeme Yöntemi', 'Açıklama'];
+  
+  const rows = transactions.map(t => {
+    const categoryName = categories.find(c => c.id === t.categoryId)?.name || 'Kategorisiz';
+    const projectName = t.projectId ? (projects.find(p => p.id === t.projectId)?.name || '') : 'Kişisel (Şirket Dışı)';
+    const typeLabel = t.type === 'income' ? 'Gelir' : 'Gider';
+    const paymentMethodLabel = t.paymentMethod === 'credit_card' ? 'Kredi Kartı' : 'Nakit';
+    const currencyLabel = t.currency || 'TRY';
+    const descriptionClean = (t.description || '').replace(/"/g, '""');
+    
+    return [
+      t.date,
+      typeLabel,
+      t.amount.toString(),
+      currencyLabel,
+      categoryName,
+      projectName,
+      paymentMethodLabel,
+      `"${descriptionClean}"`
+    ];
+  });
+  
+  const csvContent = [
+    headers.join(';'),
+    ...rows.map(r => r.join(';'))
+  ].join('\n');
+  
+  const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.setAttribute('href', url);
+  link.setAttribute('download', `Gelir_Gider_Raporu_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
 }

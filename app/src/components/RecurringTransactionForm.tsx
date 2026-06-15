@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -20,6 +20,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 interface RecurringTransactionFormProps {
   categories: Category[];
+  activeCurrency?: string;
   onSubmit: (data: {
     amount: number;
     description: string;
@@ -29,10 +30,11 @@ interface RecurringTransactionFormProps {
     endDate?: string;
     isActive: boolean;
     paymentMethod?: 'cash' | 'credit_card';
+    currency?: string;
   }) => void;
 }
 
-export function RecurringTransactionForm({ categories, onSubmit }: RecurringTransactionFormProps) {
+export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', onSubmit }: RecurringTransactionFormProps) {
   const [type, setType] = useState<TransactionType>('income');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -42,6 +44,11 @@ export function RecurringTransactionForm({ categories, onSubmit }: RecurringTran
   const [endDate, setEndDate] = useState('');
   const [isActive, setIsActive] = useState(true);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit_card' | 'none'>('none');
+  const [currency, setCurrency] = useState(activeCurrency);
+
+  useEffect(() => {
+    setCurrency(activeCurrency);
+  }, [activeCurrency]);
 
   const incomeCategories = categories.filter(c => c.type === 'income');
   const expenseCategories = categories.filter(c => c.type === 'expense');
@@ -60,6 +67,7 @@ export function RecurringTransactionForm({ categories, onSubmit }: RecurringTran
       endDate: hasEndDate ? endDate : undefined,
       isActive,
       paymentMethod: paymentMethod !== 'none' ? paymentMethod : undefined,
+      currency,
     });
 
     // Reset form
@@ -115,24 +123,39 @@ export function RecurringTransactionForm({ categories, onSubmit }: RecurringTran
             </Button>
           </div>
 
-          {/* Amount */}
-          <div className="space-y-2">
-            <Label htmlFor="rec-amount">Tutar</Label>
-            <div className="relative">
-              <Input
-                id="rec-amount"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="pl-10"
-                required
-              />
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
-                {getCurrencySymbol()}
-              </span>
+          {/* Amount & Currency */}
+          <div className="grid grid-cols-3 gap-2">
+            <div className="col-span-2 space-y-2">
+              <Label htmlFor="rec-amount">Tutar</Label>
+              <div className="relative">
+                <Input
+                  id="rec-amount"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  placeholder="0.00"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="pl-10 text-foreground"
+                  required
+                />
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+                  {getCurrencySymbol(currency)}
+                </span>
+              </div>
+            </div>
+            <div className="col-span-1 space-y-2">
+              <Label htmlFor="rec-currency">Döviz</Label>
+              <Select value={currency} onValueChange={setCurrency} required>
+                <SelectTrigger id="rec-currency">
+                  <SelectValue placeholder="Döviz" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="TRY">TRY (₺)</SelectItem>
+                  <SelectItem value="USD">USD ($)</SelectItem>
+                  <SelectItem value="EUR">EUR (€)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
