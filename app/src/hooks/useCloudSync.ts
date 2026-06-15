@@ -166,6 +166,13 @@ export function useCloudSync(
   const handleDeleteAccountData = useCallback(async () => {
     if (!supabase || !user) return;
     setSecurityMessage(null);
+
+    const confirmation = window.prompt("Hesap verilerinizi buluttan ve yerel depolamadan kalıcı olarak silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz. Onaylamak için kutuya büyük harflerle 'ONAYLIYORUM' yazın:");
+    if (confirmation !== 'ONAYLIYORUM') {
+      toast.error('Veri silme işlemi onaylanmadığı için iptal edildi.');
+      return;
+    }
+
     try {
       setLocalStatus('loading');
       const { error: delError } = await supabase
@@ -176,7 +183,12 @@ export function useCloudSync(
       if (delError) {
         setSecurityMessage(delError.message);
       } else {
-        setSecurityMessage('Buluttaki verileriniz silindi. Hesabınızdan çıkış yapıldı.');
+        // Clear local storage for this user to avoid automatic upload on next login
+        localStorage.removeItem('gelir-gider-data-' + user.id);
+        localStorage.removeItem('gelir-gider-user');
+
+        setSecurityMessage('Buluttaki ve bu cihazdaki verileriniz kalıcı olarak silindi. Hesabınızdan çıkış yapıldı.');
+        toast.success('Bulut ve yerel verileriniz başarıyla temizlendi.');
         await signOut();
       }
     } catch (e: any) {
