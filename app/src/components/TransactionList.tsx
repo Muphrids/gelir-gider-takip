@@ -399,6 +399,7 @@ export function TransactionList({
                     <SelectItem value="TRY">TRY (₺)</SelectItem>
                     <SelectItem value="USD">USD ($)</SelectItem>
                     <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

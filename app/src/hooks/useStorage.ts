@@ -268,6 +268,7 @@ export function useStorage() {
               updatedAt: new Date().toISOString(),
               projectId: recurring.projectId,
               paymentMethod: recurring.paymentMethod,
+              currency: recurring.currency,
             });
           }
         }

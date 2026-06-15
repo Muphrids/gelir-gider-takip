@@ -154,6 +154,7 @@ export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', o
                   <SelectItem value="TRY">TRY (₺)</SelectItem>
                   <SelectItem value="USD">USD ($)</SelectItem>
                   <SelectItem value="EUR">EUR (€)</SelectItem>
+                  <SelectItem value="GBP">GBP (£)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
