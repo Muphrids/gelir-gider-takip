@@ -1520,6 +1520,7 @@ function App() {
                 : data.transactions.reduce((sum, t) => sum + (t.type === 'income' ? t.amount : -t.amount), 0)
               }
               selectedDate={selectedDate}
+              savingsGoals={selectedProject ? (data.savingsGoals || []).filter(g => g.projectId === selectedProject) : (data.savingsGoals || [])}
             />
 
             {/* Summary Cards */}

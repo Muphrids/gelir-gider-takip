@@ -13,7 +13,7 @@ import {
   ReferenceLine,
 } from 'recharts';
 import { formatCurrency, getCurrencySymbol } from '@/lib/utils';
-import type { RecurringTransaction, Transaction } from '@/types';
+import type { RecurringTransaction, Transaction, SavingsGoal } from '@/types';
 import { 
   TrendingUp, 
   AlertTriangle, 
@@ -21,7 +21,8 @@ import {
   Plus, 
   Trash2, 
   HelpCircle,
-  RefreshCw
+  RefreshCw,
+  Target
 } from 'lucide-react';
 import { parseISO, addMonths } from 'date-fns';
 
@@ -30,6 +31,7 @@ interface CashFlowForecastChartProps {
   transactions: Transaction[];
   currentBalance: number;
   selectedDate: string;
+  savingsGoals?: SavingsGoal[];
 }
 
 interface SimulatedItem {
@@ -60,6 +62,7 @@ export function CashFlowForecastChart({
   transactions,
   currentBalance,
   selectedDate,
+  savingsGoals = [],
 }: CashFlowForecastChartProps) {
   // 1. State for Critical Balance limit
   const [criticalBalance, setCriticalBalance] = useState<number>(() => {
@@ -75,6 +78,7 @@ export function CashFlowForecastChart({
 
   // 2. State for Scenario Simulation (Ya Şöyle Olursa?)
   const [simulatedItems, setSimulatedItems] = useState<SimulatedItem[]>([]);
+  const showSimulatedCurve = simulatedItems.length > 0;
   const [simMonth, setSimMonth] = useState<number>(0);
   const [simAmount, setSimAmount] = useState<string>('');
   const [simType, setSimType] = useState<'income' | 'expense'>('income');
@@ -287,6 +291,74 @@ export function CashFlowForecastChart({
     };
   }, [transactions, recurringTransactions, currentBalance, selectedDate, simulatedItems, criticalBalance]);
 
+  // Process goal statuses and match them with projection months
+  const goalsAnalysis = useMemo(() => {
+    let startDate: Date;
+    try {
+      startDate = parseISO(selectedDate);
+    } catch {
+      startDate = new Date();
+    }
+
+    return (savingsGoals || [])
+      .filter(g => g.currentAmount < g.targetAmount) // only active/unachieved goals
+      .map(goal => {
+        const remaining = goal.targetAmount - goal.currentAmount;
+        let goalDate: Date;
+        try {
+          goalDate = parseISO(goal.targetDate);
+        } catch {
+          goalDate = new Date();
+        }
+
+        // Calculate months difference between startDate and goalDate
+        const startYear = startDate.getFullYear();
+        const startMonth = startDate.getMonth();
+        const goalYear = goalDate.getFullYear();
+        const goalMonth = goalDate.getMonth();
+        
+        const monthsDiff = (goalYear - startYear) * 12 + (goalMonth - startMonth);
+        
+        let status: 'feasible' | 'at_risk' | 'long_term' | 'overdue' = 'long_term';
+        let projectedBalanceAtGoal = 0;
+        let targetMonthLabel = '';
+
+        if (monthsDiff < 0) {
+          status = 'overdue';
+        } else if (monthsDiff >= 0 && monthsDiff < 6) {
+          // It falls within the 6-month projection window!
+          const dataPoint = forecastResult.dataPoints[monthsDiff];
+          if (dataPoint) {
+            projectedBalanceAtGoal = showSimulatedCurve 
+              ? dataPoint['Simüle Edilen Bakiye'] 
+              : dataPoint['Tahmini Bakiye'];
+            targetMonthLabel = dataPoint.name;
+            status = projectedBalanceAtGoal >= remaining ? 'feasible' : 'at_risk';
+          }
+        } else {
+          status = 'long_term';
+        }
+
+        // Calculate suggested monthly contribution if at risk
+        let suggestedMonthly = 0;
+        if (status === 'at_risk') {
+          const monthsLeft = Math.max(1, monthsDiff);
+          const deficit = remaining - projectedBalanceAtGoal;
+          suggestedMonthly = Math.ceil((deficit / monthsLeft) * 100) / 100;
+        }
+
+        return {
+          ...goal,
+          remaining,
+          monthsDiff,
+          status,
+          projectedBalanceAtGoal,
+          targetMonthLabel,
+          suggestedMonthly,
+        };
+      });
+  }, [savingsGoals, forecastResult.dataPoints, selectedDate, showSimulatedCurve]);
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -326,7 +398,6 @@ export function CashFlowForecastChart({
     return null;
   };
 
-  const showSimulatedCurve = simulatedItems.length > 0;
 
   return (
     <Card className="w-full col-span-full dark:bg-slate-900 dark:border-white/10 transition-all duration-200">
@@ -507,6 +578,26 @@ export function CashFlowForecastChart({
                   strokeWidth={1.5}
                 />
               )}
+
+              {/* Reference Lines for Savings Goals */}
+              {goalsAnalysis
+                .filter(g => g.status === 'feasible' || g.status === 'at_risk')
+                .map(g => (
+                  <ReferenceLine
+                    key={g.id}
+                    x={g.targetMonthLabel}
+                    stroke={g.status === 'feasible' ? '#10b981' : '#f59e0b'}
+                    strokeDasharray="3 3"
+                    strokeWidth={1.5}
+                    label={{
+                      value: `🎯 ${g.name} (${formatCurrency(g.remaining)})`,
+                      position: 'top',
+                      fill: g.status === 'feasible' ? '#10b981' : '#f59e0b',
+                      fontSize: 9,
+                      fontWeight: 'bold',
+                    }}
+                  />
+                ))}
 
               {/* Standard Balance Curve (Solid Area) */}
               {visibleSeries.balance && (
@@ -721,6 +812,103 @@ export function CashFlowForecastChart({
             )}
           </div>
         </div>
+
+        {/* PANEL: Savings Goals Feasibility Analysis */}
+        {goalsAnalysis.length > 0 && (
+          <div className="border-t dark:border-white/5 pt-6 space-y-4 animate-in fade-in duration-200">
+            <h4 className="text-sm font-bold flex items-center gap-1.5 text-gray-800 dark:text-white">
+              <Target className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" />
+              Tasarruf Hedefleri & Nakit Akışı Uyumluluk Analizi
+            </h4>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Gelecek 6 aylık tahmini nakit akışınıza göre, aktif hedeflerinize vade tarihlerinde ulaşıp ulaşamayacağınız analiz edilmiştir.
+            </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {goalsAnalysis.map(goal => (
+                <div 
+                  key={goal.id} 
+                  className={`p-4 rounded-xl border text-xs flex flex-col justify-between gap-3 shadow-sm ${
+                    goal.status === 'feasible' 
+                      ? 'bg-green-50/20 dark:bg-green-950/10 border-green-200 dark:border-green-900/30' 
+                      : goal.status === 'at_risk'
+                      ? 'bg-amber-50/20 dark:bg-amber-950/10 border-amber-200 dark:border-amber-900/30'
+                      : goal.status === 'overdue'
+                      ? 'bg-red-50/20 dark:bg-red-950/10 border-red-200 dark:border-red-900/30'
+                      : 'bg-slate-50/40 dark:bg-slate-800/10 border-slate-200 dark:border-white/5'
+                  }`}
+                >
+                  <div className="space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-gray-800 dark:text-white text-sm">🎯 {goal.name}</span>
+                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${
+                        goal.status === 'feasible' 
+                          ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20' 
+                          : goal.status === 'at_risk'
+                          ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20'
+                          : goal.status === 'overdue'
+                          ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
+                          : 'bg-gray-500/10 text-gray-500 dark:text-gray-400 border border-gray-500/20'
+                      }`}>
+                        {goal.status === 'feasible' && 'Ulaşılabilir'}
+                        {goal.status === 'at_risk' && 'Risk Altında'}
+                        {goal.status === 'overdue' && 'Süresi Geçmiş'}
+                        {goal.status === 'long_term' && 'Uzun Vadeli'}
+                      </span>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3 pt-1 text-[11px]">
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400 block">Kalan Hedef Tutar:</span>
+                        <span className="font-bold text-gray-800 dark:text-slate-200">{formatCurrency(goal.remaining)}</span>
+                      </div>
+                      <div>
+                        <span className="text-gray-500 dark:text-gray-400 block">Vade Tarihi:</span>
+                        <span className="font-bold text-gray-800 dark:text-slate-200">{goal.targetMonthLabel || goal.targetDate}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="text-[11px] pt-2 border-t border-gray-100 dark:border-white/5 text-gray-600 dark:text-gray-300">
+                    {goal.status === 'feasible' && (
+                      <p className="flex items-start gap-1.5">
+                        <span className="text-green-500 font-bold">✓</span>
+                        <span>
+                          Vade ayında ({goal.targetMonthLabel}) öngörülen kasanız <strong>{formatCurrency(goal.projectedBalanceAtGoal)}</strong>, kalan hedefinizden fazla. Bu hedefi rahatlıkla karşılayabilirsiniz.
+                        </span>
+                      </p>
+                    )}
+                    {goal.status === 'at_risk' && (
+                      <div className="space-y-1.5">
+                        <p className="flex items-start gap-1.5 text-amber-600 dark:text-amber-400">
+                          <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-pulse" />
+                          <span>
+                            Vade ayında ({goal.targetMonthLabel}) kasanızın <strong>{formatCurrency(goal.projectedBalanceAtGoal)}</strong> olması öngörülüyor. Hedefi tamamlamak için <strong>{formatCurrency(goal.remaining - goal.projectedBalanceAtGoal)}</strong> açığınız kalabilir.
+                          </span>
+                        </p>
+                        <p className="bg-amber-500/5 p-2 rounded border border-amber-500/10 text-gray-700 dark:text-gray-300">
+                          💡 <strong>Katkı Önerisi:</strong> Kalan {Math.max(1, goal.monthsDiff)} ay boyunca her ay ortalama en az <strong>{formatCurrency(goal.suggestedMonthly)}</strong> ek tasarruf yapmanız veya simülasyona ek gelir senaryosu eklemeniz önerilir.
+                        </p>
+                      </div>
+                    )}
+                    {goal.status === 'overdue' && (
+                      <p className="flex items-start gap-1.5 text-red-500">
+                        <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                        <span>Hedefinizin vadesi geçmiş durumda. Hedef tarihini güncelleyerek yeniden analiz alabilirsiniz.</span>
+                      </p>
+                    )}
+                    {goal.status === 'long_term' && (
+                      <p className="flex items-start gap-1.5 text-gray-500">
+                        <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
+                        <span>Hedef vadeniz 6 aydan uzun olduğu için nakit akışı grafiğinde doğrudan analiz edilmemiştir.</span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
