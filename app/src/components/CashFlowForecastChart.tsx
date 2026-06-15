@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  AreaChart,
+  ComposedChart,
   Area,
   Line,
   XAxis,
@@ -547,7 +547,7 @@ export function CashFlowForecastChart({
         {/* CHART DISPLAY */}
         <div className="h-80 w-full relative">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart
+            <ComposedChart
               data={forecastResult.dataPoints}
               margin={{ top: 10, right: 10, left: 10, bottom: 5 }}
             >
@@ -648,7 +648,7 @@ export function CashFlowForecastChart({
                   animationDuration={300}
                 />
               )}
-            </AreaChart>
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
 
