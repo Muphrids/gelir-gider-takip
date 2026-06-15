@@ -17,6 +17,7 @@ import { getToday, getCurrencySymbol } from '@/lib/utils';
 import { Plus, TrendingUp, TrendingDown, Repeat } from 'lucide-react';
 import { CalendarPicker } from './CalendarPicker';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface RecurringTransactionFormProps {
   categories: Category[];
@@ -35,6 +36,7 @@ interface RecurringTransactionFormProps {
 }
 
 export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', onSubmit }: RecurringTransactionFormProps) {
+  const { t } = useLanguage();
   const [type, setType] = useState<TransactionType>('income');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -86,7 +88,7 @@ export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', o
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <Repeat className="w-5 h-5" />
-          Sabit İşlem Ekle
+          {t('form.addNewRecurring')}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -105,7 +107,7 @@ export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', o
               }`}
             >
               <TrendingUp className="w-4 h-4" />
-              Gelir
+              {t('general.income')}
             </Button>
             <Button
               type="button"
@@ -119,14 +121,14 @@ export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', o
               }`}
             >
               <TrendingDown className="w-4 h-4" />
-              Gider
+              {t('general.expense')}
             </Button>
           </div>
 
           {/* Amount & Currency */}
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2 space-y-2">
-              <Label htmlFor="rec-amount">Tutar</Label>
+              <Label htmlFor="rec-amount">{t('general.amount')}</Label>
               <div className="relative">
                 <Input
                   id="rec-amount"
@@ -145,10 +147,10 @@ export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', o
               </div>
             </div>
             <div className="col-span-1 space-y-2">
-              <Label htmlFor="rec-currency">Döviz</Label>
+              <Label htmlFor="rec-currency">{t('general.currency')}</Label>
               <Select value={currency} onValueChange={setCurrency} required>
                 <SelectTrigger id="rec-currency">
-                  <SelectValue placeholder="Döviz" />
+                  <SelectValue placeholder={t('general.currency')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="TRY">TRY (₺)</SelectItem>
@@ -162,10 +164,10 @@ export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', o
 
           {/* Category */}
           <div className="space-y-2">
-            <Label htmlFor="rec-category">Kategori</Label>
+            <Label htmlFor="rec-category">{t('general.category')}</Label>
             <Select value={categoryId} onValueChange={setCategoryId} required>
               <SelectTrigger>
-                <SelectValue placeholder="Kategori seçin" />
+                <SelectValue placeholder={t('form.selectCategory')} />
               </SelectTrigger>
               <SelectContent>
                 {filteredCategories.map((category) => (
@@ -185,7 +187,7 @@ export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', o
 
           {/* Payment Method */}
           <div className="space-y-2">
-            <Label>Ödeme Yöntemi</Label>
+            <Label>{t('general.paymentMethod')}</Label>
             <RadioGroup 
               value={paymentMethod} 
               onValueChange={(val) => setPaymentMethod(val as 'cash' | 'credit_card' | 'none')}
@@ -193,26 +195,26 @@ export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', o
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="none" id="rec-pm-none" />
-                <Label htmlFor="rec-pm-none" className="cursor-pointer font-normal">Belirtilmemiş</Label>
+                <Label htmlFor="rec-pm-none" className="cursor-pointer font-normal">{t('general.none')}</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="cash" id="rec-pm-cash" />
-                <Label htmlFor="rec-pm-cash" className="cursor-pointer font-normal">💵 Nakit</Label>
+                <Label htmlFor="rec-pm-cash" className="cursor-pointer font-normal">{t('general.cashEmoji')}</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="credit_card" id="rec-pm-card" />
-                <Label htmlFor="rec-pm-card" className="cursor-pointer font-normal">💳 Kredi Kartı</Label>
+                <Label htmlFor="rec-pm-card" className="cursor-pointer font-normal">{t('general.cardEmoji')}</Label>
               </div>
             </RadioGroup>
           </div>
 
           {/* Start Date */}
           <div className="space-y-2">
-            <Label>Başlangıç Tarihi</Label>
+            <Label>{t('form.startDate')}</Label>
             <CalendarPicker
               date={startDate}
               onDateChange={setStartDate}
-              label="Başlangıç tarihi seçin"
+              label={t('form.selectStartDate')}
             />
           </div>
 
@@ -224,17 +226,17 @@ export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', o
               onCheckedChange={(checked) => setHasEndDate(checked as boolean)}
             />
             <Label htmlFor="hasEndDate" className="cursor-pointer">
-              Bitiş tarihi var
+              {t('form.hasEndDate')}
             </Label>
           </div>
 
           {hasEndDate && (
             <div className="space-y-2">
-              <Label>Bitiş Tarihi</Label>
+              <Label>{t('form.endDate')}</Label>
               <CalendarPicker
                 date={endDate}
                 onDateChange={setEndDate}
-                label="Bitiş tarihi seçin"
+                label={t('form.selectEndDate')}
               />
             </div>
           )}
@@ -247,16 +249,16 @@ export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', o
               onCheckedChange={(checked) => setIsActive(checked as boolean)}
             />
             <Label htmlFor="isActive" className="cursor-pointer">
-              Aktif
+              {t('form.isActive')}
             </Label>
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="rec-description">Açıklama (Opsiyonel)</Label>
+            <Label htmlFor="rec-description">{t('form.descriptionOptional')}</Label>
             <Textarea
               id="rec-description"
-              placeholder="İşlem hakkında not..."
+              placeholder={t('form.notePlaceholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -270,7 +272,7 @@ export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', o
             disabled={!amount || !categoryId}
           >
             <Plus className="w-4 h-4 mr-2" />
-            Sabit {type === 'income' ? 'Gelir' : 'Gider'} Ekle
+            {type === 'income' ? t('form.addRecurringIncome') : t('form.addRecurringExpense')}
           </Button>
         </form>
       </CardContent>

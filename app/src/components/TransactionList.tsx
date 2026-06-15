@@ -31,6 +31,7 @@ import { CalendarPicker } from './CalendarPicker';
 import type { Transaction, Category, Project } from '@/types';
 import { formatCurrency, formatShortDate, getCurrencySymbol } from '@/lib/utils';
 import { Trash2, Calendar, Search, Download, Edit, TrendingUp, TrendingDown } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -55,6 +56,8 @@ export function TransactionList({
   activeCurrency = 'TRY',
   exchangeRates = { TRY: 1, USD: 33.0, EUR: 35.5 },
 }: TransactionListProps) {
+  const { t } = useLanguage();
+  const displayTitle = title === 'İşlemler' ? t('nav.transactions') : title;
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   
@@ -147,17 +150,25 @@ export function TransactionList({
 
   // Export filtered transactions to CSV
   const handleExportCSV = () => {
-    const headers = ['Tarih', 'Şirket', 'Kategori', 'Açıklama', 'Ödeme Yöntemi', 'Tür', 'Tutar'];
-    const rows = filteredTransactions.map((t) => {
-      const cat = getCategory(t.categoryId);
+    const headers = [
+      t('general.date'),
+      t('general.project'),
+      t('general.category'),
+      t('general.description'),
+      t('general.paymentMethod'),
+      t('general.type'),
+      t('general.amount')
+    ];
+    const rows = filteredTransactions.map((tx) => {
+      const cat = getCategory(tx.categoryId);
       return [
-        formatShortDate(t.date),
-        getProjectName(t.projectId),
-        cat?.name || 'Bilinmeyen',
-        (t.description || '').replace(/"/g, '""'),
-        t.paymentMethod === 'cash' ? 'Nakit' : t.paymentMethod === 'credit_card' ? 'Kredi Kartı' : 'Belirtilmedi',
-        t.type === 'income' ? 'Gelir' : 'Gider',
-        t.amount.toFixed(2),
+        formatShortDate(tx.date),
+        getProjectName(tx.projectId),
+        cat?.name || t('general.unknown'),
+        (tx.description || '').replace(/"/g, '""'),
+        tx.paymentMethod === 'cash' ? t('general.cash') : tx.paymentMethod === 'credit_card' ? t('general.creditCard') : t('general.none'),
+        tx.type === 'income' ? t('general.income') : t('general.expense'),
+        tx.amount.toFixed(2),
       ];
     });
 
@@ -190,14 +201,14 @@ export function TransactionList({
   return (
     <Card className="w-full">
       <CardHeader className="pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <CardTitle className="text-lg">{title}</CardTitle>
+        <CardTitle className="text-lg">{displayTitle}</CardTitle>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           {/* Search Bar */}
           <div className="relative flex-1 sm:w-64">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <Input
               type="text"
-              placeholder="İşlemlerde ara..."
+              placeholder={t('general.search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8 h-9 text-sm"
@@ -212,7 +223,7 @@ export function TransactionList({
             disabled={filteredTransactions.length === 0}
           >
             <Download className="w-4 h-4" />
-            <span className="hidden md:inline">CSV İndir</span>
+            <span className="hidden md:inline">{t('general.downloadCSV')}</span>
           </Button>
         </div>
       </CardHeader>
@@ -220,17 +231,17 @@ export function TransactionList({
         {filteredTransactions.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>Aradığınız kriterlere uygun işlem bulunamadı.</p>
+            <p>{t('list.noItems')}</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tarih</TableHead>
-                  <TableHead>Kategori</TableHead>
-                  <TableHead>Açıklama</TableHead>
-                  <TableHead className="text-right">Tutar</TableHead>
+                  <TableHead>{t('general.date')}</TableHead>
+                  <TableHead>{t('general.category')}</TableHead>
+                  <TableHead>{t('general.description')}</TableHead>
+                  <TableHead className="text-right">{t('general.amount')}</TableHead>
                   <TableHead className="w-24"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -275,7 +286,7 @@ export function TransactionList({
                             )}
                             {transaction.paymentMethod && (
                               <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-full w-fit border bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 border-slate-200 dark:border-white/10">
-                                {transaction.paymentMethod === 'cash' ? '💵 Nakit' : '💳 Kredi Kartı'}
+                                {transaction.paymentMethod === 'cash' ? t('general.cashEmoji') : t('general.cardEmoji')}
                               </span>
                             )}
                           </div>
@@ -291,9 +302,9 @@ export function TransactionList({
                             {isIncome ? '+' : '-'}
                             {formatCurrency(transaction.amount, transaction.currency || 'TRY')}
                           </span>
-                          {transaction.currency && transaction.currency !== activeCurrency && (
+                          {(transaction.currency || 'TRY') !== activeCurrency && (
                             <span className="text-[10px] text-gray-400 dark:text-gray-500 font-medium mt-0.5 whitespace-nowrap">
-                              ({isIncome ? '+' : '-'}{formatCurrency(convertAmount(transaction.amount, transaction.currency, activeCurrency), activeCurrency)})
+                              ({isIncome ? '+' : '-'}{formatCurrency(convertAmount(transaction.amount, transaction.currency || 'TRY', activeCurrency), activeCurrency)})
                             </span>
                           )}
                         </div>
@@ -331,9 +342,9 @@ export function TransactionList({
       <Dialog open={!!editTransaction} onOpenChange={() => setEditTransaction(null)}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>İşlemi Düzenle</DialogTitle>
+            <DialogTitle>{t('form.editTransaction')}</DialogTitle>
             <DialogDescription>
-              Seçili işlemin detaylarını güncelleyin.
+              {t('form.editTransactionDesc')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSaveEdit} className="space-y-4">
@@ -351,7 +362,7 @@ export function TransactionList({
                 }`}
               >
                 <TrendingUp className="w-4 h-4" />
-                Gelir
+                {t('general.income')}
               </Button>
               <Button
                 type="button"
@@ -365,14 +376,14 @@ export function TransactionList({
                 }`}
               >
                 <TrendingDown className="w-4 h-4" />
-                Gider
+                {t('general.expense')}
               </Button>
             </div>
 
             {/* Amount & Currency */}
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-2 space-y-2">
-                <Label htmlFor="edit-amount">Tutar</Label>
+                <Label htmlFor="edit-amount">{t('general.amount')}</Label>
                 <div className="relative">
                   <Input
                     id="edit-amount"
@@ -390,10 +401,10 @@ export function TransactionList({
                 </div>
               </div>
               <div className="col-span-1 space-y-2">
-                <Label htmlFor="edit-currency">Döviz</Label>
+                <Label htmlFor="edit-currency">{t('general.currency')}</Label>
                 <Select value={editCurrency} onValueChange={setEditCurrency} required>
                   <SelectTrigger id="edit-currency">
-                    <SelectValue placeholder="Döviz" />
+                    <SelectValue placeholder={t('general.currency')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="TRY">TRY (₺)</SelectItem>
@@ -407,10 +418,10 @@ export function TransactionList({
 
             {/* Category */}
             <div className="space-y-2">
-              <Label htmlFor="edit-category">Kategori</Label>
+              <Label htmlFor="edit-category">{t('general.category')}</Label>
               <Select value={editCategoryId} onValueChange={setEditCategoryId} required>
                 <SelectTrigger>
-                  <SelectValue placeholder="Kategori seçin" />
+                  <SelectValue placeholder={t('form.selectCategory')} />
                 </SelectTrigger>
                 <SelectContent>
                   {editFilteredCategories.map((category) => (
@@ -430,38 +441,38 @@ export function TransactionList({
 
             {/* Payment Method */}
             <div className="space-y-2">
-              <Label htmlFor="edit-payment-method">Ödeme Yöntemi (Opsiyonel)</Label>
+              <Label htmlFor="edit-payment-method">{t('form.paymentMethodOptional')}</Label>
               <Select 
                 value={editPaymentMethod} 
                 onValueChange={(val) => setEditPaymentMethod(val as 'cash' | 'credit_card' | 'none')}
               >
                 <SelectTrigger id="edit-payment-method">
-                  <SelectValue placeholder="Ödeme yöntemi seçin" />
+                  <SelectValue placeholder={t('form.selectPaymentMethod')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">Belirtilmemiş</SelectItem>
-                  <SelectItem value="cash">💵 Nakit</SelectItem>
-                  <SelectItem value="credit_card">💳 Kredi Kartı</SelectItem>
+                  <SelectItem value="none">{t('general.none')}</SelectItem>
+                  <SelectItem value="cash">{t('general.cashEmoji')}</SelectItem>
+                  <SelectItem value="credit_card">{t('general.cardEmoji')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             {/* Date */}
             <div className="space-y-2">
-              <Label>Tarih</Label>
+              <Label>{t('general.date')}</Label>
               <CalendarPicker
                 date={editDate}
                 onDateChange={setEditDate}
-                label="Tarih seçin"
+                label={t('form.selectDate')}
               />
             </div>
 
             {/* Description */}
             <div className="space-y-2">
-              <Label htmlFor="edit-description">Açıklama (Opsiyonel)</Label>
+              <Label htmlFor="edit-description">{t('form.descriptionOptional')}</Label>
               <Textarea
                 id="edit-description"
-                placeholder="İşlem hakkında not..."
+                placeholder={t('form.notePlaceholder')}
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 rows={2}
@@ -470,10 +481,10 @@ export function TransactionList({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setEditTransaction(null)}>
-                İptal
+                {t('general.cancel')}
               </Button>
               <Button type="submit" disabled={!editAmount || !editCategoryId}>
-                Kaydet
+                {t('general.save')}
               </Button>
             </DialogFooter>
           </form>
@@ -484,17 +495,17 @@ export function TransactionList({
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>İşlemi Sil</DialogTitle>
+            <DialogTitle>{t('list.deleteTransaction')}</DialogTitle>
             <DialogDescription>
-              Bu işlemi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+              {t('list.deleteConfirm')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)}>
-              İptal
+              {t('general.cancel')}
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              Sil
+              {t('general.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

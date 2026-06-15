@@ -34,7 +34,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/components/ui/dialog';import { LanguageProvider, useLanguage } from '@/contexts/LanguageContext';
 
 import {
   filterTransactionsByViewMode,
@@ -69,9 +69,10 @@ const PRESET_COLORS = [
   '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899',
 ];
 
-const CURRENT_VERSION = 'v1.1.4';
+const CURRENT_VERSION = 'v1.1.5';
 
-function App() {
+function MainApp() {
+  const { t, language, setLanguage } = useLanguage();
   const { user: authUser, status: authStatus, error: authError, signInWithGoogle, signOut } = useAuth();
   const {
     data,
@@ -106,7 +107,7 @@ function App() {
     importData,
   } = useStorage();
 
-  const cloudSync = useCloudSync(data, setAllData, authUser, signOut);
+  const cloudSync = useCloudSync(data, setAllData, authUser, signOut, currentUser);
 
 
 
@@ -174,11 +175,21 @@ function App() {
   const [currency, setCurrencyState] = useState(() => localStorage.getItem('gelir-gider-currency') || 'TRY');
 
   // Exchange rates state (relative to TRY - stores the value of 1 unit of foreign currency in TRY)
-  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({
-    TRY: 1,
-    USD: 33.0,
-    EUR: 35.5,
-    GBP: 42.0,
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem('gelir-gider-rates');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // fallback to default
+      }
+    }
+    return {
+      TRY: 1,
+      USD: 33.0,
+      EUR: 35.5,
+      GBP: 42.0,
+    };
   });
 
   // Fetch live exchange rates relative to TRY
@@ -191,12 +202,14 @@ function App() {
           const tryToEur = data.rates.EUR;
           const tryToGbp = data.rates.GBP;
           if (tryToUsd && tryToEur) {
-            setExchangeRates({
+            const rates = {
               TRY: 1,
               USD: 1 / tryToUsd,
               EUR: 1 / tryToEur,
               GBP: tryToGbp ? 1 / tryToGbp : 42.0,
-            });
+            };
+            setExchangeRates(rates);
+            localStorage.setItem('gelir-gider-rates', JSON.stringify(rates));
           }
         }
       })
@@ -654,10 +667,11 @@ function App() {
   // Convert all transactions to the selected default currency
   const allTransactionsConverted = useMemo(() => {
     return data.transactions.map(t => {
-      if (!t.currency || t.currency === currency) {
+      const tCurrency = t.currency || 'TRY';
+      if (tCurrency === currency) {
         return t;
       }
-      const fromRate = exchangeRates[t.currency] || 1;
+      const fromRate = exchangeRates[tCurrency] || 1;
       const toRate = exchangeRates[currency] || 1;
       const convertedAmount = (t.amount * fromRate) / toRate;
       return {
@@ -670,10 +684,11 @@ function App() {
   // Convert all recurring transactions to the selected default currency
   const allRecurringTransactionsConverted = useMemo(() => {
     return data.recurringTransactions.map(r => {
-      if (!r.currency || r.currency === currency) {
+      const rCurrency = r.currency || 'TRY';
+      if (rCurrency === currency) {
         return r;
       }
-      const fromRate = exchangeRates[r.currency] || 1;
+      const fromRate = exchangeRates[rCurrency] || 1;
       const toRate = exchangeRates[currency] || 1;
       const convertedAmount = (r.amount * fromRate) / toRate;
       return {
@@ -686,10 +701,11 @@ function App() {
   // Convert filtered transactions to the selected default currency for calculations
   const filteredTransactionsConverted = useMemo(() => {
     return filteredTransactions.map(t => {
-      if (!t.currency || t.currency === currency) {
+      const tCurrency = t.currency || 'TRY';
+      if (tCurrency === currency) {
         return t;
       }
-      const fromRate = exchangeRates[t.currency] || 1;
+      const fromRate = exchangeRates[tCurrency] || 1;
       const toRate = exchangeRates[currency] || 1;
       const convertedAmount = (t.amount * fromRate) / toRate;
       return {
@@ -1054,7 +1070,7 @@ function App() {
                 }}
                 className="text-xs font-semibold text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 py-2 px-4 rounded-lg transition-all"
               >
-                Tüm Şirketleri Görüntüle
+                {t('nav.viewAllProjects')}
               </button>
             </div>
           </div>
@@ -1071,7 +1087,7 @@ function App() {
               </div>
               <div>
                 <div className="flex items-center gap-3 flex-wrap">
-                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">Gelir Gider Takip</h1>
+                  <h1 className="text-xl font-bold text-gray-900 dark:text-white">{t('nav.title')}</h1>
                   {data.projects.length > 0 && (
                     <div className="relative">
                       <select
@@ -1083,7 +1099,7 @@ function App() {
                         }}
                         className="text-xs font-semibold pl-7 pr-6 py-1 rounded-full border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer shadow-sm appearance-none select-none"
                       >
-                        <option value="all">🏢 Tüm Şirketler</option>
+                        <option value="all">🏢 {t('nav.allProjects')}</option>
                         {data.projects.map((proj) => (
                           <option key={proj.id} value={proj.id}>
                             {proj.name}
@@ -1155,12 +1171,12 @@ function App() {
                     </div>
                   )}
                 </div>
-                <p className="text-sm text-gray-500 dark:text-gray-400">Kişisel finans yöneticiniz</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('nav.subTitle')}</p>
               </div>
             </div>
             <div className="hidden sm:flex items-center gap-4">
               <div className="text-right">
-                <p className="text-sm text-gray-500 dark:text-gray-400">Toplam Bakiye</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{t('summary.totalBalance')}</p>
                 <p className={`text-lg font-bold ${
                   balance >= 0 ? 'text-green-600' : 'text-red-600'
                 }`}>
@@ -1178,11 +1194,11 @@ function App() {
           <TabsList className="grid w-full grid-cols-5 h-auto py-1 lg:h-10 lg:py-0 lg:w-auto lg:inline-grid">
             <TabsTrigger value="transactions" className="flex flex-col lg:flex-row items-center gap-1 lg:gap-2 py-1.5 px-1 lg:px-3 text-[10px] lg:text-sm h-full w-full">
               <TrendingUp className="w-4 h-4" />
-              <span className="text-[10px] lg:text-xs xl:text-sm font-medium">İşlemler</span>
+              <span className="text-[10px] lg:text-xs xl:text-sm font-medium">{t('nav.transactions')}</span>
             </TabsTrigger>
             <TabsTrigger value="cheques_notes" className="flex flex-col lg:flex-row items-center gap-1 lg:gap-2 py-1.5 px-1 lg:px-3 text-[10px] lg:text-sm h-full w-full relative">
               <FileText className="w-4 h-4" />
-              <span className="text-[10px] lg:text-xs xl:text-sm font-medium text-center leading-tight">Çek & Senet</span>
+              <span className="text-[10px] lg:text-xs xl:text-sm font-medium text-center leading-tight">{t('nav.chequesNotes')}</span>
               {pendingAlertCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 lg:-top-1 lg:-right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white animate-pulse">
                   {pendingAlertCount}
@@ -1191,15 +1207,15 @@ function App() {
             </TabsTrigger>
             <TabsTrigger value="goals" className="flex flex-col lg:flex-row items-center gap-1 lg:gap-2 py-1.5 px-1 lg:px-3 text-[10px] lg:text-sm h-full w-full">
               <Target className="w-4 h-4" />
-              <span className="text-[10px] lg:text-xs xl:text-sm font-medium">Hedefler</span>
+              <span className="text-[10px] lg:text-xs xl:text-sm font-medium">{t('nav.goals')}</span>
             </TabsTrigger>
             <TabsTrigger value="reports" className="flex flex-col lg:flex-row items-center gap-1 lg:gap-2 py-1.5 px-1 lg:px-3 text-[10px] lg:text-sm h-full w-full">
               <PieChart className="w-4 h-4" />
-              <span className="text-[10px] lg:text-xs xl:text-sm font-medium">Raporlar</span>
+              <span className="text-[10px] lg:text-xs xl:text-sm font-medium">{t('nav.reports')}</span>
             </TabsTrigger>
             <TabsTrigger value="settings" className="flex flex-col lg:flex-row items-center gap-1 lg:gap-2 py-1.5 px-1 lg:px-3 text-[10px] lg:text-sm h-full w-full">
               <Settings className="w-4 h-4" />
-              <span className="text-[10px] lg:text-xs xl:text-sm font-medium">Ayarlar</span>
+              <span className="text-[10px] lg:text-xs xl:text-sm font-medium">{t('nav.settings')}</span>
             </TabsTrigger>
           </TabsList>
 
@@ -1745,28 +1761,46 @@ function App() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Settings className="w-5 h-5 text-blue-600" />
-                    Uygulama Seçenekleri
+                    {t('settings.title')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Dil Seçici */}
+                  <div className="space-y-2">
+                    <Label htmlFor="language-select" className="text-sm font-medium">{t('settings.language')}</Label>
+                    <select
+                      id="language-select"
+                      value={language}
+                      onChange={(e) => {
+                        const val = e.target.value as 'tr' | 'en';
+                        setLanguage(val);
+                        toast.success(t(val === 'tr' ? 'toast.languageSet' : 'toast.languageSet'));
+                      }}
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-slate-800 dark:border-white/10 dark:text-white"
+                    >
+                      <option value="tr">Türkçe (TR)</option>
+                      <option value="en">English (EN)</option>
+                    </select>
+                  </div>
+
                   {/* Tema Seçici */}
                   <div className="space-y-2">
-                    <Label htmlFor="theme-select" className="text-sm font-medium">Arayüz Teması</Label>
+                    <Label htmlFor="theme-select" className="text-sm font-medium">{t('settings.theme')}</Label>
                     <select
                       id="theme-select"
                       value={theme}
                       onChange={(e) => setTheme(e.target.value as 'light' | 'dark' | 'system')}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-slate-800 dark:border-white/10 dark:text-white"
                     >
-                      <option value="light">Açık Tema (Light Mode)</option>
-                      <option value="dark">Koyu Tema (Dark Mode)</option>
-                      <option value="system">Sistem Teması (System Default)</option>
+                      <option value="light">{t('settings.themeLight')}</option>
+                      <option value="dark">{t('settings.themeDark')}</option>
+                      <option value="system">{t('settings.themeSystem')}</option>
                     </select>
                   </div>
 
                   {/* Para Birimi Seçici */}
                   <div className="space-y-2">
-                    <Label htmlFor="currency-select" className="text-sm font-medium">Varsayılan Para Birimi</Label>
+                    <Label htmlFor="currency-select" className="text-sm font-medium">{t('settings.currency')}</Label>
                     <select
                       id="currency-select"
                       value={currency}
@@ -1774,7 +1808,7 @@ function App() {
                         const val = e.target.value;
                         setCurrencyState(val);
                         localStorage.setItem('gelir-gider-currency', val);
-                        toast.success(`Varsayılan para birimi ${val} olarak ayarlandı.`);
+                        toast.success(t('toast.currencySet', { val }));
                       }}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-slate-800 dark:border-white/10 dark:text-white"
                     >
@@ -1787,7 +1821,7 @@ function App() {
 
                   {/* Otomatik Kilit Seçici */}
                   <div className="space-y-2">
-                    <Label htmlFor="autolock-select" className="text-sm font-medium">Otomatik Kilit Süresi</Label>
+                    <Label htmlFor="autolock-select" className="text-sm font-medium">{t('settings.autoLock')}</Label>
                     <select
                       id="autolock-select"
                       value={autoLockTimeout}
@@ -1795,19 +1829,19 @@ function App() {
                         const val = parseInt(e.target.value, 10);
                         setAutoLockTimeout(val);
                         localStorage.setItem('gelir-gider-autolock', val.toString());
-                        toast.success(`Otomatik kilit süresi ${val === 0 ? 'devre dışı bırakıldı' : `${val} dakika olarak ayarlandı`}.`);
+                        toast.success(val === 0 ? t('settings.autoLockDisabled') : t('toast.updated'));
                       }}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-slate-800 dark:border-white/10 dark:text-white"
                     >
-                      <option value="0">Devre Dışı (Kilitlenmesin)</option>
-                      <option value="1">1 Dakika Hareketsizlik</option>
-                      <option value="5">5 Dakika Hareketsizlik</option>
-                      <option value="10">10 Dakika Hareketsizlik</option>
-                      <option value="15">15 Dakika Hareketsizlik</option>
-                      <option value="30">30 Dakika Hareketsizlik</option>
+                      <option value="0">{t('settings.autoLockDisabled')}</option>
+                      <option value="1">{t('settings.autoLockMin', { min: 1 })}</option>
+                      <option value="5">{t('settings.autoLockMin', { min: 5 })}</option>
+                      <option value="10">{t('settings.autoLockMin', { min: 10 })}</option>
+                      <option value="15">{t('settings.autoLockMin', { min: 15 })}</option>
+                      <option value="30">{t('settings.autoLockMin', { min: 30 })}</option>
                     </select>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Uygulamada herhangi bir hareket olmazsa ekran otomatik olarak kilitlenir. (Sadece şifre koruması aktifken çalışır)
+                      {t('settings.autoLockDesc')}
                     </p>
                   </div>
                 </CardContent>
@@ -2087,4 +2121,10 @@ function App() {
   );
 }
 
-export default App;
+export default function App() {
+  return (
+    <LanguageProvider>
+      <MainApp />
+    </LanguageProvider>
+  );
+}

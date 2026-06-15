@@ -16,6 +16,7 @@ import { getToday, getCurrencySymbol } from '@/lib/utils';
 import { Plus, TrendingUp, TrendingDown } from 'lucide-react';
 import { CalendarPicker } from './CalendarPicker';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface TransactionFormProps {
   categories: Category[];
@@ -49,6 +50,7 @@ function safeEvaluateMath(expression: string): number | null {
 }
 
 export function TransactionForm({ categories, transactions, activeCurrency = 'TRY', onSubmit }: TransactionFormProps) {
+  const { t } = useLanguage();
   const [type, setType] = useState<TransactionType>('income');
   const [amount, setAmount] = useState('');
   const [description, setDescription] = useState('');
@@ -159,7 +161,7 @@ export function TransactionForm({ categories, transactions, activeCurrency = 'TR
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <Plus className="w-5 h-5" />
-          Yeni İşlem Ekle
+          {t('form.addNewTransaction')}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -178,7 +180,7 @@ export function TransactionForm({ categories, transactions, activeCurrency = 'TR
               }`}
             >
               <TrendingUp className="w-4 h-4" />
-              Gelir
+              {t('general.income')}
             </Button>
             <Button
               type="button"
@@ -192,14 +194,14 @@ export function TransactionForm({ categories, transactions, activeCurrency = 'TR
               }`}
             >
               <TrendingDown className="w-4 h-4" />
-              Gider
+              {t('general.expense')}
             </Button>
           </div>
 
           {/* Quick Templates */}
           {quickTemplates.length > 0 && (
             <div className="space-y-1.5 select-none animate-in fade-in duration-200">
-              <Label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Hızlı Şablonlar</Label>
+              <Label className="text-xs font-semibold text-gray-400 dark:text-gray-500 uppercase tracking-wider">{t('form.quickTemplates')}</Label>
               <div className="flex flex-wrap gap-1.5">
                 {quickTemplates.map((template, idx) => (
                   <button
@@ -234,12 +236,12 @@ export function TransactionForm({ categories, transactions, activeCurrency = 'TR
           {/* Amount & Currency */}
           <div className="grid grid-cols-3 gap-2">
             <div className="col-span-2 space-y-2">
-              <Label htmlFor="amount">Tutar</Label>
+              <Label htmlFor="amount">{t('general.amount')}</Label>
               <div className="relative group">
                 <Input
                   id="amount"
                   type="text"
-                  placeholder="0.00 veya 100+50-20..."
+                  placeholder={t('form.mathHint')}
                   value={amount}
                   onChange={(e) => setAmount(e.target.value)}
                   onBlur={handleAmountBlur}
@@ -266,10 +268,10 @@ export function TransactionForm({ categories, transactions, activeCurrency = 'TR
               </div>
             </div>
             <div className="col-span-1 space-y-2">
-              <Label htmlFor="currency">Döviz</Label>
+              <Label htmlFor="currency">{t('general.currency')}</Label>
               <Select value={currency} onValueChange={setCurrency} required>
                 <SelectTrigger id="currency">
-                  <SelectValue placeholder="Döviz" />
+                  <SelectValue placeholder={t('general.currency')} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="TRY">TRY (₺)</SelectItem>
@@ -283,10 +285,10 @@ export function TransactionForm({ categories, transactions, activeCurrency = 'TR
 
           {/* Category */}
           <div className="space-y-2">
-            <Label htmlFor="category">Kategori</Label>
+            <Label htmlFor="category">{t('general.category')}</Label>
             <Select value={categoryId} onValueChange={setCategoryId} required>
               <SelectTrigger>
-                <SelectValue placeholder="Kategori seçin" />
+                <SelectValue placeholder={t('form.selectCategory')} />
               </SelectTrigger>
               <SelectContent>
                 {filteredCategories.map((category) => (
@@ -306,7 +308,7 @@ export function TransactionForm({ categories, transactions, activeCurrency = 'TR
 
           {/* Payment Method */}
           <div className="space-y-2">
-            <Label>Ödeme Yöntemi</Label>
+            <Label>{t('general.paymentMethod')}</Label>
             <RadioGroup 
               value={paymentMethod} 
               onValueChange={(val) => setPaymentMethod(val as 'cash' | 'credit_card' | 'none')}
@@ -314,35 +316,35 @@ export function TransactionForm({ categories, transactions, activeCurrency = 'TR
             >
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="none" id="pm-none" />
-                <Label htmlFor="pm-none" className="cursor-pointer font-normal">Belirtilmemiş</Label>
+                <Label htmlFor="pm-none" className="cursor-pointer font-normal">{t('general.none')}</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="cash" id="pm-cash" />
-                <Label htmlFor="pm-cash" className="cursor-pointer font-normal">💵 Nakit</Label>
+                <Label htmlFor="pm-cash" className="cursor-pointer font-normal">{t('general.cashEmoji')}</Label>
               </div>
               <div className="flex items-center space-x-2">
                 <RadioGroupItem value="credit_card" id="pm-card" />
-                <Label htmlFor="pm-card" className="cursor-pointer font-normal">💳 Kredi Kartı</Label>
+                <Label htmlFor="pm-card" className="cursor-pointer font-normal">{t('general.cardEmoji')}</Label>
               </div>
             </RadioGroup>
           </div>
 
           {/* Date with Calendar Picker */}
           <div className="space-y-2">
-            <Label>Tarih</Label>
+            <Label>{t('general.date')}</Label>
             <CalendarPicker
               date={date}
               onDateChange={setDate}
-              label="Tarih seçin"
+              label={t('form.selectDate')}
             />
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description">Açıklama (Opsiyonel)</Label>
+            <Label htmlFor="description">{t('form.descriptionOptional')}</Label>
             <Textarea
               id="description"
-              placeholder="İşlem hakkında not..."
+              placeholder={t('form.notePlaceholder')}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
@@ -357,7 +359,7 @@ export function TransactionForm({ categories, transactions, activeCurrency = 'TR
             disabled={!amount || !categoryId}
           >
             <Plus className="w-4 h-4 mr-2" />
-            {type === 'income' ? 'Gelir Ekle' : 'Gider Ekle'}
+            {type === 'income' ? t('form.addIncome') : t('form.addExpense')}
           </Button>
         </form>
       </CardContent>

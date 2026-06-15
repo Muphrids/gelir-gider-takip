@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { formatCurrency } from '@/lib/utils';
 import { TrendingUp, TrendingDown, Wallet, BarChart3 } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface SummaryCardsProps {
   totalIncome: number;
@@ -19,6 +20,8 @@ export function SummaryCards({
   onIncomeClick,
   onExpenseClick,
 }: SummaryCardsProps) {
+  const { t } = useLanguage();
+
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
       {/* Total Income */}
@@ -29,7 +32,7 @@ export function SummaryCards({
         <CardHeader className="pb-2">
           <CardTitle className="text-xs sm:text-sm font-medium text-green-700 flex items-center gap-1.5 sm:gap-2 select-none">
             <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span className={onIncomeClick ? 'hover:underline' : ''}>Toplam Gelir</span>
+            <span className={onIncomeClick ? 'hover:underline' : ''}>{t('summary.totalIncome')}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -47,7 +50,7 @@ export function SummaryCards({
         <CardHeader className="pb-2">
           <CardTitle className="text-xs sm:text-sm font-medium text-red-700 flex items-center gap-1.5 sm:gap-2 select-none">
             <TrendingDown className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            <span className={onExpenseClick ? 'hover:underline' : ''}>Toplam Gider</span>
+            <span className={onExpenseClick ? 'hover:underline' : ''}>{t('summary.totalExpense')}</span>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -68,7 +71,7 @@ export function SummaryCards({
             balance >= 0 ? 'text-blue-700' : 'text-orange-700'
           }`}>
             <Wallet className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            Bakiye
+            {t('summary.netBalance')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -85,7 +88,7 @@ export function SummaryCards({
         <CardHeader className="pb-2">
           <CardTitle className="text-xs sm:text-sm font-medium text-purple-700 flex items-center gap-1.5 sm:gap-2">
             <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-            İşlem Sayısı
+            {t('summary.transactionCount')}
           </CardTitle>
         </CardHeader>
         <CardContent>

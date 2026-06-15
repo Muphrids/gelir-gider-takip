@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Dialog,
   DialogContent,
@@ -29,6 +30,7 @@ const PRESET_COLORS = [
 ];
 
 export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: CategoryManagerProps) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [type, setType] = useState<TransactionType>('expense');
@@ -106,7 +108,7 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
             <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{category.name}</span>
             {category.budgetLimit && category.budgetLimit > 0 && (
               <span className="text-[10px] bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 px-1.5 py-0.5 rounded font-semibold ml-1">
-                L: {formatCurrency(category.budgetLimit)}
+                {t('cat.limitShort')}: {formatCurrency(category.budgetLimit)}
               </span>
             )}
             <Button
@@ -135,7 +137,7 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
     <Card className="w-full">
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center justify-between">
-          <span>Kategoriler</span>
+          <span>{t('cat.title')}</span>
           <Button size="sm" onClick={() => {
             setEditingCategory(null);
             setName('');
@@ -145,19 +147,19 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
             setIsOpen(true);
           }}>
             <Plus className="w-4 h-4 mr-1" />
-            Yeni
+            {t('cat.new')}
           </Button>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <CategoryList 
           items={incomeCategories} 
-          title="Gelir Kategorileri" 
+          title={t('cat.incomeTitle')} 
           icon={TrendingUp}
         />
         <CategoryList 
           items={expenseCategories} 
-          title="Gider Kategorileri" 
+          title={t('cat.expenseTitle')} 
           icon={TrendingDown}
         />
       </CardContent>
@@ -169,25 +171,25 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
       }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingCategory ? 'Kategoriyi Düzenle' : 'Yeni Kategori Ekle'}</DialogTitle>
+            <DialogTitle>{editingCategory ? t('cat.editTitle') : t('cat.addTitle')}</DialogTitle>
             <DialogDescription>
-              {editingCategory ? 'Kategori detaylarını güncelleyin.' : 'Yeni bir gelir veya gider kategorisi oluşturun.'}
+              {editingCategory ? t('cat.editDesc') : t('cat.addDesc')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Kategori Adı</Label>
+              <Label htmlFor="name">{t('cat.nameLabel')}</Label>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Örn: Market, Ulaşım..."
+                placeholder={t('cat.namePlaceholder')}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Tür</Label>
+              <Label>{t('cat.typeLabel')}</Label>
               <div className="flex gap-2">
                 <Button
                   type="button"
@@ -199,7 +201,7 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
                   className={type === 'income' ? 'bg-green-600 hover:bg-green-700 text-white' : ''}
                 >
                   <TrendingUp className="w-4 h-4 mr-1" />
-                  Gelir
+                  {t('general.income')}
                 </Button>
                 <Button
                   type="button"
@@ -208,7 +210,7 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
                   className={type === 'expense' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
                 >
                   <TrendingDown className="w-4 h-4 mr-1" />
-                  Gider
+                  {t('general.expense')}
                 </Button>
               </div>
             </div>
@@ -216,7 +218,7 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
             {/* Budget Limit Field - Only for Expense Categories */}
             {type === 'expense' && (
               <div className="space-y-2">
-                <Label htmlFor="budgetLimit">Aylık Bütçe Limiti ({getCurrencySymbol()}) (Opsiyonel)</Label>
+                <Label htmlFor="budgetLimit">{t('cat.budgetLimit', { symbol: getCurrencySymbol() })}</Label>
                 <Input
                   id="budgetLimit"
                   type="number"
@@ -224,16 +226,16 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
                   step="0.01"
                   value={budgetLimit}
                   onChange={(e) => setBudgetLimit(e.target.value)}
-                  placeholder="Örn: 5000"
+                  placeholder={t('cat.budgetPlaceholder')}
                 />
                 <p className="text-[11px] text-gray-500">
-                  Bu harcama kategorisi için aylık maksimum limit belirler.
+                  {t('cat.budgetDesc')}
                 </p>
               </div>
             )}
 
             <div className="space-y-2">
-              <Label>Renk</Label>
+              <Label>{t('cat.colorLabel')}</Label>
               <div className="flex flex-wrap gap-2">
                 {PRESET_COLORS.map((c) => (
                   <button
@@ -254,10 +256,10 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
                 setIsOpen(false);
                 setEditingCategory(null);
               }}>
-                İptal
+                {t('general.cancel')}
               </Button>
               <Button type="submit" disabled={!name.trim()}>
-                {editingCategory ? 'Güncelle' : 'Ekle'}
+                {editingCategory ? t('cat.updateBtn') : t('cat.addBtn')}
               </Button>
             </DialogFooter>
           </form>
@@ -270,18 +272,18 @@ export function CategoryManager({ categories, onAdd, onUpdate, onDelete }: Categ
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <ShieldAlert className="w-5 h-5 text-red-600 animate-bounce" />
-              Kategoriyi Sil
+              {t('cat.deleteTitle')}
             </DialogTitle>
             <DialogDescription>
-              Bu kategoriyi silmek istediğinizden emin misiniz? Bu kategoriye ait işlemler otomatik olarak <strong>"Diğer"</strong> kategorisine atanacaktır.
+              {t('cat.deleteDesc')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)}>
-              İptal
+              {t('general.cancel')}
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              Sil
+              {t('general.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

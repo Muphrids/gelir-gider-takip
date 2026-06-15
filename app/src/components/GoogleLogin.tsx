@@ -1,6 +1,7 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Wallet, Loader2, AlertCircle } from 'lucide-react';
 
 interface GoogleLoginProps {
@@ -11,6 +12,7 @@ interface GoogleLoginProps {
 }
 
 export function GoogleLogin({ onSignIn, isLoading, error, isConfigured }: GoogleLoginProps) {
+  const { t } = useLanguage();
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md shadow-lg">
@@ -20,10 +22,10 @@ export function GoogleLogin({ onSignIn, isLoading, error, isConfigured }: Google
           </div>
           <div>
             <CardTitle className="text-2xl font-bold text-gray-900">
-              Gelir Gider Takip
+              {t('login.title')}
             </CardTitle>
             <p className="text-sm text-gray-500 mt-1">
-              Devam etmek için Google hesabınızla giriş yapın
+              {t('login.subtitle')}
             </p>
           </div>
         </CardHeader>
@@ -32,8 +34,7 @@ export function GoogleLogin({ onSignIn, isLoading, error, isConfigured }: Google
             <Alert variant="destructive">
               <AlertCircle className="w-4 h-4" />
               <AlertDescription>
-                Supabase yapılandırılmamış. <code>.env</code> dosyanıza{' '}
-                <code>VITE_SUPABASE_URL</code> ve <code>VITE_SUPABASE_ANON_KEY</code> ekleyin.
+                {t('login.envMissing')}
               </AlertDescription>
             </Alert>
           )}
@@ -72,11 +73,11 @@ export function GoogleLogin({ onSignIn, isLoading, error, isConfigured }: Google
                 />
               </svg>
             )}
-            Google ile Giriş Yap
+            {t('login.btn')}
           </Button>
 
           <p className="text-xs text-center text-gray-500">
-            Giriş yaptığınızda verileriniz güvenli şekilde bulutta senkronize edilir.
+            {t('login.hint')}
           </p>
         </CardContent>
       </Card>

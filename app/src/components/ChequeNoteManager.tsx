@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -62,6 +63,7 @@ export function ChequeNoteManager({
   onDelete,
   onAddTransaction,
 }: ChequeNoteManagerProps) {
+  const { t } = useLanguage();
   // Dialog States
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -267,12 +269,12 @@ export function ChequeNoteManager({
       {/* Action Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-xl font-bold text-gray-900 dark:text-white">Çek & Senet Hatırlatıcı</h2>
-          <p className="text-sm text-gray-500 dark:text-gray-400">Vadeli alacak ve borç belgelerinizi yönetin.</p>
+          <h2 className="text-xl font-bold text-gray-900 dark:text-white">{t('cn.reminderTitle')}</h2>
+          <p className="text-sm text-gray-500 dark:text-gray-400">{t('cn.reminderDesc')}</p>
         </div>
         <Button onClick={() => setIsAddOpen(true)} className="w-full sm:w-auto">
           <Plus className="w-4 h-4 mr-2" />
-          Yeni Belge Ekle
+          {t('cn.addNewDoc')}
         </Button>
       </div>
 
@@ -282,11 +284,11 @@ export function ChequeNoteManager({
         <Card className="dark:bg-slate-900 dark:border-white/10">
           <CardContent className="pt-4 flex items-center justify-between">
             <div>
-              <p className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Toplam Alacak</p>
+              <p className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{t('cn.totalReceivables')}</p>
               <h3 className="text-lg sm:text-2xl font-bold text-green-600 dark:text-green-400 mt-1">
                 {formatCurrency(stats.receivableTotal)}
               </h3>
-              <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">Beklemedeki tahsilatlar</p>
+              <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{t('cn.pendingCollections')}</p>
             </div>
             <div className="p-2 sm:p-3 bg-green-50 dark:bg-green-950/20 text-green-600 dark:text-green-400 rounded-lg shrink-0">
               <ArrowUpRight className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -298,11 +300,11 @@ export function ChequeNoteManager({
         <Card className="dark:bg-slate-900 dark:border-white/10">
           <CardContent className="pt-4 flex items-center justify-between">
             <div>
-              <p className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Toplam Borç</p>
+              <p className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{t('cn.totalPayables')}</p>
               <h3 className="text-lg sm:text-2xl font-bold text-red-600 dark:text-red-400 mt-1">
                 {formatCurrency(stats.payableTotal)}
               </h3>
-              <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">Beklemedeki ödemeler</p>
+              <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{t('cn.pendingPayments')}</p>
             </div>
             <div className="p-2 sm:p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-lg shrink-0">
               <ArrowDownLeft className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -314,11 +316,11 @@ export function ChequeNoteManager({
         <Card className="col-span-2 md:col-span-1 dark:bg-slate-900 dark:border-white/10">
           <CardContent className="pt-4 flex items-center justify-between">
             <div>
-              <p className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Vadesi Gelenler / Geçenler</p>
+              <p className="text-[10px] sm:text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{t('cn.dueOverdue')}</p>
               <h3 className={`text-lg sm:text-2xl font-bold mt-1 ${stats.alertCount > 0 ? 'text-amber-500 animate-pulse' : 'text-gray-700 dark:text-gray-300'}`}>
-                {stats.alertCount} Adet
+                {t('cn.itemsCount', { count: stats.alertCount })}
               </h3>
-              <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">Toplam: {formatCurrency(stats.alertTotal)}</p>
+              <p className="text-[10px] sm:text-xs text-gray-400 mt-0.5">{t('cn.totalPrefix')}{formatCurrency(stats.alertTotal)}</p>
             </div>
             <div className={`p-2 sm:p-3 rounded-lg shrink-0 ${stats.alertCount > 0 ? 'bg-amber-50 dark:bg-amber-950/30 text-amber-500' : 'bg-gray-100 dark:bg-slate-800 text-gray-400'}`}>
               <Bell className="w-5 h-5 sm:w-6 sm:h-6" />
@@ -335,7 +337,7 @@ export function ChequeNoteManager({
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
-                placeholder="Borçlu adı, seri no veya açıklama ara..."
+                placeholder={t('cn.searchPlaceholder')}
                 className="pl-9 w-full dark:bg-slate-800 dark:border-white/10"
                 value={filterSearch}
                 onChange={(e) => setFilterSearch(e.target.value)}
@@ -346,48 +348,48 @@ export function ChequeNoteManager({
               {/* Type Filter */}
               <Select value={filterType} onValueChange={setFilterType}>
                 <SelectTrigger className="w-[110px] dark:bg-slate-800 dark:border-white/10 text-xs">
-                  <SelectValue placeholder="Tür" />
+                  <SelectValue placeholder={t('general.type')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tüm Belgeler</SelectItem>
-                  <SelectItem value="cheque">Çek</SelectItem>
-                  <SelectItem value="promissory_note">Senet</SelectItem>
+                  <SelectItem value="all">{t('cn.allDocs')}</SelectItem>
+                  <SelectItem value="cheque">{t('cn.cheque')}</SelectItem>
+                  <SelectItem value="promissory_note">{t('cn.promissoryNote')}</SelectItem>
                 </SelectContent>
               </Select>
 
               {/* Direction Filter */}
               <Select value={filterDirection} onValueChange={setFilterDirection}>
                 <SelectTrigger className="w-[110px] dark:bg-slate-800 dark:border-white/10 text-xs">
-                  <SelectValue placeholder="Yön" />
+                  <SelectValue placeholder={t('cn.docDirection')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tüm Yönler</SelectItem>
-                  <SelectItem value="receivable">Alacak</SelectItem>
-                  <SelectItem value="payable">Borç</SelectItem>
+                  <SelectItem value="all">{t('cn.allDirections')}</SelectItem>
+                  <SelectItem value="receivable">{t('cn.receivable')}</SelectItem>
+                  <SelectItem value="payable">{t('cn.payable')}</SelectItem>
                 </SelectContent>
               </Select>
 
               {/* Status Filter */}
               <Select value={filterStatus} onValueChange={setFilterStatus}>
                 <SelectTrigger className="w-[120px] dark:bg-slate-800 dark:border-white/10 text-xs">
-                  <SelectValue placeholder="Durum" />
+                  <SelectValue placeholder={t('cn.status')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tüm Durumlar</SelectItem>
-                  <SelectItem value="pending">Beklemede</SelectItem>
-                  <SelectItem value="paid">Tahsil Edildi/Ödendi</SelectItem>
-                  <SelectItem value="cancelled">İptal</SelectItem>
-                  <SelectItem value="returned">Karşılıksız/İade</SelectItem>
+                  <SelectItem value="all">{t('cn.allStatuses')}</SelectItem>
+                  <SelectItem value="pending">{t('cn.pending')}</SelectItem>
+                  <SelectItem value="paid">{t('cn.collectedPaidStatus')}</SelectItem>
+                  <SelectItem value="cancelled">{t('cn.cancelled')}</SelectItem>
+                  <SelectItem value="returned">{t('cn.bouncedReturnedStatus')}</SelectItem>
                 </SelectContent>
               </Select>
 
               {/* Company/Project Filter */}
               <Select value={filterProject} onValueChange={setFilterProject}>
                 <SelectTrigger className="w-[130px] dark:bg-slate-800 dark:border-white/10 text-xs">
-                  <SelectValue placeholder="Şirket/Proje" />
+                  <SelectValue placeholder={t('general.project')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tüm Şirketler</SelectItem>
+                  <SelectItem value="all">{t('nav.allProjects')}</SelectItem>
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.name}
@@ -404,19 +406,19 @@ export function ChequeNoteManager({
             <table className="w-full text-sm text-left border-collapse">
               <thead>
                 <tr className="border-b dark:border-white/10 bg-gray-50/50 dark:bg-slate-800/20 text-gray-500 dark:text-gray-400 text-xs uppercase font-semibold">
-                  <th className="px-4 py-3.5">Belge Detayı</th>
-                  <th className="px-4 py-3.5">Seri No / Banka</th>
-                  <th className="px-4 py-3.5">Vade / Keşide</th>
-                  <th className="px-4 py-3.5">Tutar</th>
-                  <th className="px-4 py-3.5">Durum</th>
-                  <th className="px-4 py-3.5 text-right">Aksiyonlar</th>
+                  <th className="px-4 py-3.5">{t('cn.docDetail')}</th>
+                  <th className="px-4 py-3.5">{t('cn.serialBank')}</th>
+                  <th className="px-4 py-3.5">{t('cn.dueIssue')}</th>
+                  <th className="px-4 py-3.5">{t('general.amount')}</th>
+                  <th className="px-4 py-3.5">{t('cn.status')}</th>
+                  <th className="px-4 py-3.5 text-right">{t('general.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y dark:divide-white/10">
                 {filteredItems.length === 0 ? (
                   <tr>
                     <td colSpan={6} className="text-center py-8 text-gray-500">
-                      Gösterilecek çek veya senet kaydı bulunmuyor.
+                      {t('cn.noItemsToDisplay')}
                     </td>
                   </tr>
                 ) : (
@@ -442,7 +444,7 @@ export function ChequeNoteManager({
                                   : 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'
                               }`}
                             >
-                              {item.type === 'cheque' ? 'Çek' : 'Senet'}
+                              {item.type === 'cheque' ? t('cn.cheque') : t('cn.promissoryNote')}
                             </span>
                             <span
                               className={`text-[10px] px-2 py-0.5 rounded font-bold uppercase ${
@@ -451,7 +453,7 @@ export function ChequeNoteManager({
                                   : 'bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300'
                               }`}
                             >
-                              {item.direction === 'receivable' ? 'Alacak' : 'Borç'}
+                              {item.direction === 'receivable' ? t('cn.receivable') : t('cn.payable')}
                             </span>
                           </div>
                           <p className="font-semibold text-gray-900 dark:text-gray-100 mt-1.5">{item.debtor}</p>
@@ -476,7 +478,7 @@ export function ChequeNoteManager({
                               <Building className="w-3 h-3" /> {item.bank}
                             </p>
                           ) : (
-                            <p className="text-xs text-gray-400 italic mt-0.5">Banka belirtilmemiş</p>
+                            <p className="text-xs text-gray-400 italic mt-0.5">{t('cn.bankNotSpecified')}</p>
                           )}
                         </td>
 
@@ -485,19 +487,19 @@ export function ChequeNoteManager({
                           <div className="space-y-0.5">
                             <p className="text-xs flex items-center gap-1.5">
                               <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                              <span className="font-medium text-gray-700 dark:text-gray-300">Vade: {item.dueDate}</span>
+                              <span className="font-medium text-gray-700 dark:text-gray-300">{t('cn.duePrefix')}{item.dueDate}</span>
                               {isOverdue && (
                                 <span className="text-[10px] bg-red-100 dark:bg-red-950/40 text-red-600 dark:text-red-400 px-1 py-0.2 rounded font-bold flex items-center gap-0.5">
-                                  <AlertTriangle className="w-2.5 h-2.5" /> Gecikti
+                                  <AlertTriangle className="w-2.5 h-2.5" /> {t('cn.overdueLabel')}
                                 </span>
                               )}
                               {isDueToday && (
                                 <span className="text-[10px] bg-amber-100 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 px-1 py-0.2 rounded font-bold">
-                                  Bugün!
+                                  {t('cn.todayLabel')}
                                 </span>
                               )}
                             </p>
-                            <p className="text-[11px] text-gray-400 pl-5">Keşide: {item.issueDate}</p>
+                            <p className="text-[11px] text-gray-400 pl-5">{t('cn.issuePrefix')}{item.issueDate}</p>
                           </div>
                         </td>
 
@@ -523,10 +525,10 @@ export function ChequeNoteManager({
                                 : 'bg-gray-150 dark:bg-slate-800 text-gray-600 dark:text-gray-400 border'
                             }`}
                           >
-                            {item.status === 'pending' && 'Beklemede'}
-                            {item.status === 'paid' && 'Ödendi/Tahsil Edildi'}
-                            {item.status === 'returned' && 'Karşılıksız/İade'}
-                            {item.status === 'cancelled' && 'İptal'}
+                            {item.status === 'pending' && t('cn.pending')}
+                            {item.status === 'paid' && t('cn.paid')}
+                            {item.status === 'returned' && t('cn.returned')}
+                            {item.status === 'cancelled' && t('cn.cancelled')}
                           </span>
                         </td>
 
@@ -539,7 +541,7 @@ export function ChequeNoteManager({
                                 variant="ghost"
                                 className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-950/30"
                                 onClick={() => handleOpenPayment(item)}
-                                title="Tahsil Edildi / Ödendi İşaretle"
+                                title={t('cn.markPaidTooltip')}
                               >
                                 <CheckCircle2 className="w-4 h-4" />
                               </Button>
@@ -549,7 +551,7 @@ export function ChequeNoteManager({
                               variant="ghost"
                               className="h-8 w-8 text-gray-500 hover:text-gray-700 hover:bg-gray-100 dark:hover:bg-slate-800"
                               onClick={() => handleStartEdit(item)}
-                              title="Düzenle"
+                              title={t('general.edit')}
                             >
                               <Edit className="w-4 h-4" />
                             </Button>
@@ -558,7 +560,7 @@ export function ChequeNoteManager({
                               variant="ghost"
                               className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
                               onClick={() => setDeleteId(item.id)}
-                              title="Sil"
+                              title={t('general.delete')}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
@@ -576,7 +578,7 @@ export function ChequeNoteManager({
           <div className="block lg:hidden divide-y dark:divide-white/10">
             {filteredItems.length === 0 ? (
               <div className="text-center py-8 text-gray-500 text-sm">
-                Gösterilecek çek veya senet kaydı bulunmuyor.
+                {t('cn.noItemsToDisplay')}
               </div>
             ) : (
               filteredItems.map((item) => {
@@ -600,7 +602,7 @@ export function ChequeNoteManager({
                               : 'bg-indigo-100 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300'
                           }`}
                         >
-                          {item.type === 'cheque' ? 'Çek' : 'Senet'}
+                          {item.type === 'cheque' ? t('cn.cheque') : t('cn.promissoryNote')}
                         </span>
                         <span
                           className={`text-[9px] px-2 py-0.5 rounded font-bold uppercase ${
@@ -609,7 +611,7 @@ export function ChequeNoteManager({
                               : 'bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300'
                           }`}
                         >
-                          {item.direction === 'receivable' ? 'Alacak' : 'Borç'}
+                          {item.direction === 'receivable' ? t('cn.receivable') : t('cn.payable')}
                         </span>
                       </div>
                       <div className={`font-bold text-base ${
@@ -621,22 +623,22 @@ export function ChequeNoteManager({
 
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <span className="text-gray-400 text-[10px] block font-medium">Borçlu/Alacaklı</span>
+                        <span className="text-gray-400 text-[10px] block font-medium">{t('cn.debtorCreditor')}</span>
                         <span className="font-semibold text-gray-900 dark:text-gray-100">{item.debtor}</span>
                       </div>
                       <div>
-                        <span className="text-gray-400 text-[10px] block font-medium">Seri No / Banka</span>
+                        <span className="text-gray-400 text-[10px] block font-medium">{t('cn.serialBank')}</span>
                         <span className="text-gray-750 dark:text-gray-300">{item.serialNumber} {item.bank ? `/ ${item.bank}` : ''}</span>
                       </div>
                       <div>
-                        <span className="text-gray-400 text-[10px] block font-medium">Vade Tarihi</span>
+                        <span className="text-gray-400 text-[10px] block font-medium">{t('cn.dueDate')}</span>
                         <span className={`font-medium ${isOverdue ? 'text-red-500' : isDueToday ? 'text-amber-500' : 'text-gray-700 dark:text-gray-300'}`}>
-                          {item.dueDate} {isOverdue && '(Gecikti)'} {isDueToday && '(Bugün!)'}
+                          {item.dueDate} {isOverdue && `(${t('cn.overdueLabel')})`} {isDueToday && `(${t('cn.todayLabel')})`}
                         </span>
-                        <span className="text-[10px] text-gray-400 block">Keşide: {item.issueDate}</span>
+                        <span className="text-[10px] text-gray-400 block">{t('cn.issuePrefix')}{item.issueDate}</span>
                       </div>
                       <div>
-                        <span className="text-gray-400 text-[10px] block font-medium">Durum</span>
+                        <span className="text-gray-400 text-[10px] block font-medium">{t('cn.status')}</span>
                         <span
                           className={`inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-semibold mt-0.5 ${
                             item.status === 'pending'
@@ -648,10 +650,10 @@ export function ChequeNoteManager({
                               : 'bg-gray-150 dark:bg-slate-800 text-gray-600 dark:text-gray-400 border'
                           }`}
                         >
-                          {item.status === 'pending' && 'Beklemede'}
-                          {item.status === 'paid' && 'Ödendi/Tahsil'}
-                          {item.status === 'returned' && 'Karşılıksız/İade'}
-                          {item.status === 'cancelled' && 'İptal'}
+                          {item.status === 'pending' && t('cn.pending')}
+                          {item.status === 'paid' && t('cn.paid')}
+                          {item.status === 'returned' && t('cn.returned')}
+                          {item.status === 'cancelled' && t('cn.cancelled')}
                         </span>
                       </div>
                     </div>
@@ -713,35 +715,35 @@ export function ChequeNoteManager({
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
         <DialogContent className="max-w-lg dark:bg-slate-900 dark:text-white dark:border-white/10">
           <DialogHeader>
-            <DialogTitle>Yeni Çek veya Senet Ekle</DialogTitle>
+            <DialogTitle>{t('cn.addNewDocTitle')}</DialogTitle>
             <DialogDescription className="dark:text-gray-400">
-              Vadeli alacak veya borç belgesi detaylarını girin.
+              {t('cn.addNewDocDesc')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmitAdd} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Belge Türü</Label>
+                <Label>{t('cn.docType')}</Label>
                 <Select value={type} onValueChange={(val: any) => setType(val)}>
                   <SelectTrigger className="dark:bg-slate-800 dark:border-white/10">
-                    <SelectValue placeholder="Seçin" />
+                    <SelectValue placeholder={t('cn.selectPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cheque">Çek</SelectItem>
-                    <SelectItem value="promissory_note">Senet</SelectItem>
+                    <SelectItem value="cheque">{t('cn.cheque')}</SelectItem>
+                    <SelectItem value="promissory_note">{t('cn.promissoryNote')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>Yön / İşlem</Label>
+                <Label>{t('cn.docDirection')}</Label>
                 <Select value={direction} onValueChange={(val: any) => setDirection(val)}>
                   <SelectTrigger className="dark:bg-slate-800 dark:border-white/10">
-                    <SelectValue placeholder="Seçin" />
+                    <SelectValue placeholder={t('cn.selectPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="receivable">Alacak (Alınan)</SelectItem>
-                    <SelectItem value="payable">Borç (Verilen)</SelectItem>
+                    <SelectItem value="receivable">{t('cn.receivableReceived')}</SelectItem>
+                    <SelectItem value="payable">{t('cn.payableIssued')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -749,7 +751,7 @@ export function ChequeNoteManager({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="amount">Tutar (TL)</Label>
+                <Label htmlFor="amount">{t('cn.amountTL')}</Label>
                 <Input
                   id="amount"
                   type="number"
@@ -763,12 +765,12 @@ export function ChequeNoteManager({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="serialNumber">Seri Numarası</Label>
+                <Label htmlFor="serialNumber">{t('cn.serial')}</Label>
                 <Input
                   id="serialNumber"
                   value={serialNumber}
                   onChange={(e) => setSerialNumber(e.target.value)}
-                  placeholder="Çek/Senet Seri No..."
+                  placeholder={t('cn.serialPlaceholder')}
                   required
                   className="dark:bg-slate-800 dark:border-white/10"
                 />
@@ -777,7 +779,7 @@ export function ChequeNoteManager({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="dueDate">Vade Tarihi</Label>
+                <Label htmlFor="dueDate">{t('cn.dueDate')}</Label>
                 <Input
                   id="dueDate"
                   type="date"
@@ -789,7 +791,7 @@ export function ChequeNoteManager({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="issueDate">Keşide / Düzenleme Tarihi</Label>
+                <Label htmlFor="issueDate">{t('cn.issueDateLabel')}</Label>
                 <Input
                   id="issueDate"
                   type="date"
@@ -803,37 +805,37 @@ export function ChequeNoteManager({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="debtor">Borçlu / Ödeyecek Kişi</Label>
+                <Label htmlFor="debtor">{t('cn.debtor')}</Label>
                 <Input
                   id="debtor"
                   value={debtor}
                   onChange={(e) => setDebtor(e.target.value)}
-                  placeholder="Ad Soyad / Firma..."
+                  placeholder={t('cn.debtorPlaceholder')}
                   required
                   className="dark:bg-slate-800 dark:border-white/10"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="bank">Banka / Şube</Label>
+                <Label htmlFor="bank">{t('cn.bank')}</Label>
                 <Input
                   id="bank"
                   value={bank}
                   onChange={(e) => setBank(e.target.value)}
-                  placeholder="Garanti, Akbank vb..."
+                  placeholder={t('cn.bankPlaceholder')}
                   className="dark:bg-slate-800 dark:border-white/10"
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>İlişkili Şirket / Proje</Label>
+              <Label>{t('cn.relatedProject')}</Label>
               <Select value={projectId} onValueChange={setProjectId}>
                 <SelectTrigger className="dark:bg-slate-800 dark:border-white/10">
-                  <SelectValue placeholder="Şirket Seçin (Opsiyonel)" />
+                  <SelectValue placeholder={t('cn.selectCompanyOptional')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">İlişkilendirme Yok</SelectItem>
+                  <SelectItem value="none">{t('cn.noAssociation')}</SelectItem>
                   {projects.map((p) => (
                     <SelectItem key={p.id} value={p.id}>
                       {p.name}
@@ -844,12 +846,12 @@ export function ChequeNoteManager({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="description">Açıklama (Opsiyonel)</Label>
+              <Label htmlFor="description">{t('form.descriptionOptional')}</Label>
               <Textarea
                 id="description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ek notlar girin..."
+                placeholder={t('cn.notesPlaceholder')}
                 rows={2}
                 className="dark:bg-slate-800 dark:border-white/10"
               />
@@ -857,9 +859,9 @@ export function ChequeNoteManager({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)} className="dark:border-white/10">
-                İptal
+                {t('general.cancel')}
               </Button>
-              <Button type="submit">Ekle</Button>
+              <Button type="submit">{t('form.submitAdd')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -869,35 +871,35 @@ export function ChequeNoteManager({
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-w-lg dark:bg-slate-900 dark:text-white dark:border-white/10">
           <DialogHeader>
-            <DialogTitle>Belgeyi Düzenle</DialogTitle>
+            <DialogTitle>{t('cn.editDocTitle')}</DialogTitle>
             <DialogDescription className="dark:text-gray-400">
-              Mevcut çek veya senet kaydını düzenleyin.
+              {t('cn.editDocDesc')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmitEdit} className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Belge Türü</Label>
+                <Label>{t('cn.docType')}</Label>
                 <Select value={type} onValueChange={(val: any) => setType(val)}>
                   <SelectTrigger className="dark:bg-slate-800 dark:border-white/10">
-                    <SelectValue placeholder="Seçin" />
+                    <SelectValue placeholder={t('cn.selectPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cheque">Çek</SelectItem>
-                    <SelectItem value="promissory_note">Senet</SelectItem>
+                    <SelectItem value="cheque">{t('cn.cheque')}</SelectItem>
+                    <SelectItem value="promissory_note">{t('cn.promissoryNote')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>Yön / İşlem</Label>
+                <Label>{t('cn.docDirection')}</Label>
                 <Select value={direction} onValueChange={(val: any) => setDirection(val)}>
                   <SelectTrigger className="dark:bg-slate-800 dark:border-white/10">
-                    <SelectValue placeholder="Seçin" />
+                    <SelectValue placeholder={t('cn.selectPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="receivable">Alacak (Alınan)</SelectItem>
-                    <SelectItem value="payable">Borç (Verilen)</SelectItem>
+                    <SelectItem value="receivable">{t('cn.receivableReceived')}</SelectItem>
+                    <SelectItem value="payable">{t('cn.payableIssued')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -905,7 +907,7 @@ export function ChequeNoteManager({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-amount">Tutar (TL)</Label>
+                <Label htmlFor="edit-amount">{t('cn.amountTL')}</Label>
                 <Input
                   id="edit-amount"
                   type="number"
@@ -918,7 +920,7 @@ export function ChequeNoteManager({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-serial">Seri Numarası</Label>
+                <Label htmlFor="edit-serial">{t('cn.serial')}</Label>
                 <Input
                   id="edit-serial"
                   value={serialNumber}
@@ -931,7 +933,7 @@ export function ChequeNoteManager({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-duedate">Vade Tarihi</Label>
+                <Label htmlFor="edit-duedate">{t('cn.dueDate')}</Label>
                 <Input
                   id="edit-duedate"
                   type="date"
@@ -943,7 +945,7 @@ export function ChequeNoteManager({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-issuedate">Keşide / Düzenleme Tarihi</Label>
+                <Label htmlFor="edit-issuedate">{t('cn.issueDateLabel')}</Label>
                 <Input
                   id="edit-issuedate"
                   type="date"
@@ -957,7 +959,7 @@ export function ChequeNoteManager({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-debtor">Borçlu / Ödeyecek Kişi</Label>
+                <Label htmlFor="edit-debtor">{t('cn.debtor')}</Label>
                 <Input
                   id="edit-debtor"
                   value={debtor}
@@ -968,7 +970,7 @@ export function ChequeNoteManager({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-bank">Banka / Şube</Label>
+                <Label htmlFor="edit-bank">{t('cn.bank')}</Label>
                 <Input
                   id="edit-bank"
                   value={bank}
@@ -980,28 +982,28 @@ export function ChequeNoteManager({
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Belge Durumu</Label>
+                <Label>{t('cn.docStatus')}</Label>
                 <Select value={status} onValueChange={(val: any) => setStatus(val)}>
                   <SelectTrigger className="dark:bg-slate-800 dark:border-white/10">
-                    <SelectValue placeholder="Durum Seçin" />
+                    <SelectValue placeholder={t('cn.selectStatus')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="pending">Beklemede</SelectItem>
-                    <SelectItem value="paid">Tahsil Edildi/Ödendi</SelectItem>
-                    <SelectItem value="cancelled">İptal Edildi</SelectItem>
-                    <SelectItem value="returned">Karşılıksız/İade</SelectItem>
+                    <SelectItem value="pending">{t('cn.pending')}</SelectItem>
+                    <SelectItem value="paid">{t('cn.collectedPaidStatus')}</SelectItem>
+                    <SelectItem value="cancelled">{t('cn.cancelledStatusFull')}</SelectItem>
+                    <SelectItem value="returned">{t('cn.returnedStatusFull')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label>İlişkili Şirket / Proje</Label>
+                <Label>{t('cn.relatedProject')}</Label>
                 <Select value={projectId} onValueChange={setProjectId}>
                   <SelectTrigger className="dark:bg-slate-800 dark:border-white/10">
-                    <SelectValue placeholder="Seçin" />
+                    <SelectValue placeholder={t('cn.selectPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">İlişkilendirme Yok</SelectItem>
+                    <SelectItem value="none">{t('cn.noAssociation')}</SelectItem>
                     {projects.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.name}
@@ -1013,12 +1015,12 @@ export function ChequeNoteManager({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="edit-description">Açıklama (Opsiyonel)</Label>
+              <Label htmlFor="edit-description">{t('form.descriptionOptional')}</Label>
               <Textarea
                 id="edit-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ek notlar..."
+                placeholder={t('cn.notesPlaceholder')}
                 rows={2}
                 className="dark:bg-slate-800 dark:border-white/10"
               />
@@ -1026,9 +1028,9 @@ export function ChequeNoteManager({
 
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setIsEditOpen(false)} className="dark:border-white/10">
-                İptal
+                {t('general.cancel')}
               </Button>
-              <Button type="submit">Kaydet</Button>
+              <Button type="submit">{t('general.save')}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
@@ -1039,19 +1041,19 @@ export function ChequeNoteManager({
         <DialogContent className="max-w-md dark:bg-slate-900 dark:text-white dark:border-white/10">
           <DialogHeader>
             <DialogTitle>
-              {paymentItem?.type === 'cheque' ? 'Çek' : 'Senet'} Durumunu Güncelle
+              {t('cn.updateStatusTitle', { type: paymentItem?.type === 'cheque' ? t('cn.cheque') : t('cn.promissoryNote') })}
             </DialogTitle>
             <DialogDescription className="dark:text-gray-400">
-              Bu belgeyi **Tahsil Edildi / Ödendi** olarak işaretlemek üzeresiniz.
+              {t('cn.updateStatusDesc')}
             </DialogDescription>
           </DialogHeader>
 
           {paymentItem && (
             <div className="space-y-4 py-3">
               <div className="p-3 bg-gray-50 dark:bg-slate-800 border dark:border-white/10 rounded-lg space-y-1">
-                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">Belge Detayları</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 uppercase">{t('cn.docDetailsTitle')}</p>
                 <p className="text-sm font-semibold text-gray-900 dark:text-gray-150">
-                  {paymentItem.debtor} - Seri No: {paymentItem.serialNumber}
+                  {paymentItem.debtor} - {t('cn.serial')}: {paymentItem.serialNumber}
                 </p>
                 <p className="text-base font-bold text-blue-600 dark:text-blue-400">
                   {formatCurrency(paymentItem.amount)}
@@ -1068,16 +1070,16 @@ export function ChequeNoteManager({
                   />
                   <Label htmlFor="add-ledger-check" className="cursor-pointer font-medium text-sm flex items-center gap-1.5">
                     <Banknote className="w-4 h-4 text-blue-600" />
-                    Kasaya (İşlemlere) otomatik gelir/gider olarak kaydet
+                    {t('cn.autoRecordLedger')}
                   </Label>
                 </div>
 
                 {addToLedger && (
                   <div className="space-y-2 pl-6">
-                    <Label className="text-xs text-gray-500 dark:text-gray-400">İşlemin Ekleneceği Kategori</Label>
+                    <Label className="text-xs text-gray-500 dark:text-gray-400">{t('cn.ledgerCategory')}</Label>
                     <Select value={selectedLedgerCategory} onValueChange={setSelectedLedgerCategory}>
                       <SelectTrigger className="dark:bg-slate-800 dark:border-white/10">
-                        <SelectValue placeholder="Kategori Seçin" />
+                        <SelectValue placeholder={t('form.selectCategory')} />
                       </SelectTrigger>
                       <SelectContent>
                         {filteredCategoriesForPayment.map((c) => (
@@ -1095,9 +1097,9 @@ export function ChequeNoteManager({
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setPaymentItem(null)} className="dark:border-white/10">
-              Vazgeç
+              {t('cn.dismissBtn')}
             </Button>
-            <Button onClick={handleConfirmPayment}>Tahsil Et / Ödendi İşaretle</Button>
+            <Button onClick={handleConfirmPayment}>{t('cn.confirmPaymentBtn')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -1106,17 +1108,17 @@ export function ChequeNoteManager({
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent className="dark:bg-slate-900 dark:text-white dark:border-white/10">
           <DialogHeader>
-            <DialogTitle>Kayıt Silinecek</DialogTitle>
+            <DialogTitle>{t('cn.deleteTitle')}</DialogTitle>
             <DialogDescription className="dark:text-gray-400">
-              Bu çek/senet kaydını silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+              {t('cn.deleteDesc')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)} className="dark:border-white/10">
-              İptal
+              {t('general.cancel')}
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              Evet, Sil
+              {t('cn.deleteConfirmBtn')}
             </Button>
           </DialogFooter>
         </DialogContent>

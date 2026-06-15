@@ -19,7 +19,8 @@ export function useCloudSync(
   data: AppData,
   onDataImport: (data: AppData) => void,
   user: any,
-  signOut: () => Promise<void>
+  signOut: () => Promise<void>,
+  currentUser: string | null
 ): UseCloudSyncResult {
   const [localStatus, setLocalStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [localError, setLocalError] = useState<string | null>(null);
@@ -67,7 +68,7 @@ export function useCloudSync(
   }, [data, user]);
 
   const handleUpload = useCallback(async () => {
-    if (!supabase || !user) return;
+    if (!supabase || !user || user.id !== currentUser) return;
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setLocalStatus('error');
       setLocalError('Çevrimdışı durumdasınız. Bağlantı geldiğinde otomatik eşitlenecek.');
@@ -126,10 +127,10 @@ export function useCloudSync(
       setLocalStatus('error');
       setLocalError(e?.message ?? 'Veriler yüklenemedi.');
     }
-  }, [data, user, onDataImport]);
+  }, [data, user, currentUser, onDataImport]);
 
   const handleDownload = useCallback(async () => {
-    if (!supabase || !user) return;
+    if (!supabase || !user || user.id !== currentUser) return;
     try {
       setLocalStatus('loading');
       setLocalError(null);
@@ -161,10 +162,10 @@ export function useCloudSync(
       setLocalStatus('error');
       setLocalError(e?.message ?? 'Veriler indirilemedi.');
     }
-  }, [user, onDataImport]);
+  }, [user, currentUser, onDataImport]);
 
   const handleDeleteAccountData = useCallback(async () => {
-    if (!supabase || !user) return;
+    if (!supabase || !user || user.id !== currentUser) return;
     setSecurityMessage(null);
 
     const confirmation = window.prompt("Hesap verilerinizi buluttan ve yerel depolamadan kalıcı olarak silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz. Onaylamak için kutuya büyük harflerle 'ONAYLIYORUM' yazın:");
@@ -200,7 +201,7 @@ export function useCloudSync(
 
   // Kullanıcı değiştiğinde otomatik ilk indir
   useEffect(() => {
-    if (!user || !supabase) {
+    if (!user || !supabase || user.id !== currentUser) {
       setIsInitialLoading(false);
       return;
     }
@@ -217,24 +218,30 @@ export function useCloudSync(
           .eq('user_id', user.id)
           .maybeSingle();
 
-        if (!selectError && rows?.data) {
-          const cloudData = rows.data as AppData;
-          const cloudLastUpdated = cloudData.lastUpdated || new Date(0).toISOString();
-          const localLastUpdated = data.lastUpdated || new Date(0).toISOString();
+        if (!selectError) {
+          if (rows?.data) {
+            const cloudData = rows.data as AppData;
+            const cloudLastUpdated = cloudData.lastUpdated || new Date(0).toISOString();
+            const localLastUpdated = data.lastUpdated || new Date(0).toISOString();
 
-          if (new Date(cloudLastUpdated) > new Date(localLastUpdated)) {
-            // Buluttaki veri yerel veriden daha yeni
-            skipNextAutoUploadRef.current = true;
-            onDataImport(cloudData);
-            lastUploadedSnapshotRef.current = JSON.stringify(cloudData);
-            toast.info('Buluttaki güncel verileriniz eşitlendi.');
-          } else if (new Date(localLastUpdated) > new Date(cloudLastUpdated)) {
-            // Yerel veri daha yeni, otomatik buluta yükleme tetiklenecek
-            lastUploadedSnapshotRef.current = JSON.stringify(cloudData);
-            toast.info('Yerel verileriniz buluttan daha yeni, değişiklikler yükleniyor...');
+            if (new Date(cloudLastUpdated) > new Date(localLastUpdated)) {
+              // Buluttaki veri yerel veriden daha yeni
+              skipNextAutoUploadRef.current = true;
+              onDataImport(cloudData);
+              lastUploadedSnapshotRef.current = JSON.stringify(cloudData);
+              toast.info('Buluttaki güncel verileriniz eşitlendi.');
+            } else if (new Date(localLastUpdated) > new Date(cloudLastUpdated)) {
+              // Yerel veri daha yeni, otomatik buluta yükleme tetiklenecek
+              lastUploadedSnapshotRef.current = JSON.stringify(cloudData);
+              toast.info('Yerel verileriniz buluttan daha yeni, değişiklikler yükleniyor...');
+            } else {
+              // Eşitler, sadece snapshot'ı güncelle
+              lastUploadedSnapshotRef.current = JSON.stringify(cloudData);
+            }
           } else {
-            // Eşitler, sadece snapshot'ı güncelle
-            lastUploadedSnapshotRef.current = JSON.stringify(cloudData);
+            // Bulutta kayıtlı veri bulunamadıysa (silindiyse veya ilk kez gelindiyse)
+            // mevcut veriyi bulutla eşit sayarak otomatik yüklemeyi başlatma
+            lastUploadedSnapshotRef.current = JSON.stringify(data);
           }
         }
       } catch (e) {
@@ -243,12 +250,12 @@ export function useCloudSync(
         setIsInitialLoading(false);
       }
     })();
-  }, [user, onDataImport, data]);
+  }, [user, currentUser, onDataImport, data]);
 
   // Supabase Realtime ile diğer cihazlardaki güncellemeleri otomatik çek
   useEffect(() => {
     const client = supabase;
-    if (!client || !user) return;
+    if (!client || !user || user.id !== currentUser) return;
 
     const channel = client
       .channel(`user_data_changes_${user.id}`)
@@ -307,12 +314,12 @@ export function useCloudSync(
     return () => {
       client.removeChannel(channel);
     };
-  }, [user, data, onDataImport]);
+  }, [user, currentUser, data, onDataImport]);
 
   // Veri değiştiğinde otomatik buluta yükleme (debounce ile)
   const isBusy = localStatus === 'loading';
   useEffect(() => {
-    if (!user || !supabase) return;
+    if (!user || !supabase || user.id !== currentUser) return;
     if (isBusy || isInitialLoading) return;
 
     const currentSnapshot = JSON.stringify(data);
@@ -340,7 +347,7 @@ export function useCloudSync(
         window.clearTimeout(autoUploadTimeoutRef.current);
       }
     };
-  }, [data, user, isBusy, isInitialLoading, handleUpload]);
+  }, [data, user, currentUser, isBusy, isInitialLoading, handleUpload]);
 
   const currentSnapshot = JSON.stringify(data);
   const isSyncPending = !!(user && supabase && lastUploadedSnapshotRef.current && lastUploadedSnapshotRef.current !== currentSnapshot);

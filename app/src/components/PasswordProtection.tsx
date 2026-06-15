@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Lock, Unlock, Eye, EyeOff } from 'lucide-react';
 import {
   Dialog,
@@ -14,8 +15,6 @@ import {
 } from '@/components/ui/dialog';
 
 const PASSWORD_KEY = 'gelir-gider-password';
-
-
 
 interface PasswordProtectionProps {
   isLocked: boolean;
@@ -30,6 +29,7 @@ export function PasswordProtection({
   onResetViaGoogle,
   unlockStorage,
 }: PasswordProtectionProps) {
+  const { t } = useLanguage();
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -44,10 +44,10 @@ export function PasswordProtection({
       if (success) {
         onUnlock();
       } else {
-        setError('Hatalı şifre veya veriler çözülemedi');
+        setError(t('pass.errorInvalid'));
       }
     } catch {
-      setError('Bir hata oluştu');
+      setError(t('pass.errorGeneral'));
     } finally {
       setIsLoading(false);
     }
@@ -61,18 +61,18 @@ export function PasswordProtection({
         <CardHeader>
           <CardTitle className="text-center flex items-center justify-center gap-2">
             <Lock className="w-6 h-6 text-blue-600 animate-pulse" />
-            Uygulama Kilitli
+            {t('pass.lockedTitle')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-center text-sm text-gray-500 dark:text-gray-400">
-            Uygulamaya erişmek için şifrenizi girin
+            {t('pass.enterPass')}
           </p>
           
           <div className="relative">
             <Input
               type={showPassword ? 'text' : 'password'}
-              placeholder="Şifreniz"
+              placeholder={t('pass.placeholder')}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={isLoading}
@@ -99,7 +99,7 @@ export function PasswordProtection({
 
           <Button onClick={() => void handleUnlock()} disabled={isLoading} className="w-full">
             <Unlock className="w-4 h-4 mr-2" />
-            {isLoading ? 'Çözülüyor...' : 'Kilidi Aç'}
+            {isLoading ? t('pass.unlocking') : t('pass.unlockBtn')}
           </Button>
 
           {onResetViaGoogle && (
@@ -108,9 +108,9 @@ export function PasswordProtection({
                 type="button"
                 onClick={() => setShowResetConfirm(true)}
                 disabled={isLoading}
-                className="text-xs text-blue-600 hover:text-blue-700 hover:underline dark:text-blue-400 font-medium"
+                className="text-xs text-blue-600 hover:text-blue-770 hover:underline dark:text-blue-400 font-medium"
               >
-                Şifremi Unuttum
+                {t('pass.forgotBtn')}
               </button>
             </div>
           )}
@@ -121,24 +121,20 @@ export function PasswordProtection({
       <Dialog open={showResetConfirm} onOpenChange={setShowResetConfirm}>
         <DialogContent className="dark:bg-slate-900 dark:text-white dark:border-white/10">
           <DialogHeader>
-            <DialogTitle>Şifreyi Sıfırla</DialogTitle>
+            <DialogTitle>{t('pass.resetTitle')}</DialogTitle>
             <DialogDescription className="dark:text-gray-400">
-              Şifrenizi sıfırlamak için Google hesabınızla yeniden giriş yapmanız gerekmektedir. 
-              <br /><br />
-              <strong className="text-amber-600 dark:text-amber-400">Önemli Uyarı:</strong> Parolanız unutulduğu için şifrelenmiş yerel verileriniz çözülemeyecek ve bu cihazdan temizlenecektir. Google ile giriş yaptıktan sonra, buluttaki verileriniz (Supabase) otomatik olarak geri yüklenecektir.
-              <br /><br />
-              Bu işlem için mevcut oturumunuz kapatılacak ve Google giriş ekranına yönlendirileceksiniz. İnternet bağlantınızın olduğundan emin olun.
+              <span dangerouslySetInnerHTML={{ __html: t('pass.resetDesc') }} />
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowResetConfirm(false)} className="dark:border-white/10">
-              İptal
+              {t('general.cancel')}
             </Button>
             <Button variant="destructive" onClick={() => {
               setShowResetConfirm(false);
               if (onResetViaGoogle) onResetViaGoogle();
             }}>
-              Evet, Çıkış Yap ve Sıfırla
+              {t('pass.resetConfirmBtn')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -153,6 +149,7 @@ interface PasswordSettingsProps {
 }
 
 export function PasswordSettings({ enableEncryption, disableEncryption }: PasswordSettingsProps) {
+  const { t } = useLanguage();
   const [hasPassword, setHasPassword] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -167,11 +164,11 @@ export function PasswordSettings({ enableEncryption, disableEncryption }: Passwo
 
   const handleSetPassword = async () => {
     if (password.length < 4) {
-      setMessage('Şifre en az 4 karakter olmalı');
+      setMessage(t('pass.errorShort'));
       return;
     }
     if (password !== confirmPassword) {
-      setMessage('Şifreler eşleşmiyor');
+      setMessage(t('pass.errorMismatch'));
       return;
     }
 
@@ -181,10 +178,10 @@ export function PasswordSettings({ enableEncryption, disableEncryption }: Passwo
       setHasPassword(true);
       setPassword('');
       setConfirmPassword('');
-      setMessage('Şifre başarıyla ayarlandı. Verileriniz yerel olarak şifrelendi.');
+      setMessage(t('pass.successSet'));
       setTimeout(() => setMessage(''), 3000);
     } catch {
-      setMessage('Şifre ayarlanırken bir hata oluştu.');
+      setMessage(t('pass.errorSet'));
     } finally {
       setIsLoading(false);
     }
@@ -194,10 +191,10 @@ export function PasswordSettings({ enableEncryption, disableEncryption }: Passwo
     try {
       disableEncryption();
       setHasPassword(false);
-      setMessage('Şifre kaldırıldı. Verileriniz artık şifresiz saklanıyor.');
+      setMessage(t('pass.successRemove'));
       setTimeout(() => setMessage(''), 3000);
     } catch {
-      setMessage('Şifre kaldırılırken bir hata oluştu.');
+      setMessage(t('pass.errorRemove'));
     }
   };
 
@@ -206,7 +203,7 @@ export function PasswordSettings({ enableEncryption, disableEncryption }: Passwo
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2 dark:text-white">
           <Lock className="w-5 h-5 text-blue-600" />
-          Şifre Koruması
+          {t('pass.settingsTitle')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -214,23 +211,23 @@ export function PasswordSettings({ enableEncryption, disableEncryption }: Passwo
           <div className="space-y-4">
             <div className="p-3 bg-green-50 text-green-700 dark:bg-green-950/30 dark:text-green-400 rounded-lg flex items-center gap-2 text-sm font-medium">
               <Lock className="w-4 h-4 text-green-600 dark:text-green-400 animate-pulse" />
-              <span>Şifre koruması aktif (Veriler diskte şifreli saklanıyor)</span>
+              <span>{t('pass.statusActive')}</span>
             </div>
             <Button variant="destructive" onClick={handleRemovePassword} className="w-full sm:w-auto">
-              Şifre Korumasını Kaldır
+              {t('pass.removeBtn')}
             </Button>
           </div>
         ) : (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="new-password">Yeni Şifre</Label>
+              <Label htmlFor="new-password">{t('pass.newLabel')}</Label>
               <div className="relative">
                 <Input
                   id="new-password"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="En az 4 karakter"
+                  placeholder={t('pass.newPlaceholder')}
                   className="pr-10 dark:bg-slate-800 dark:border-white/10 dark:text-white"
                   disabled={isLoading}
                 />
@@ -246,13 +243,13 @@ export function PasswordSettings({ enableEncryption, disableEncryption }: Passwo
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirm-password">Şifreyi Onayla</Label>
+              <Label htmlFor="confirm-password">{t('pass.confirmLabel')}</Label>
               <Input
                 id="confirm-password"
                 type={showPassword ? 'text' : 'password'}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Şifreyi tekrar girin"
+                placeholder={t('pass.confirmPlaceholder')}
                 className="dark:bg-slate-800 dark:border-white/10 dark:text-white"
                 disabled={isLoading}
               />
@@ -260,19 +257,19 @@ export function PasswordSettings({ enableEncryption, disableEncryption }: Passwo
 
             <Button onClick={() => void handleSetPassword()} disabled={isLoading} className="w-full">
               <Lock className="w-4 h-4 mr-2" />
-              {isLoading ? 'Ayarlanıyor...' : 'Şifre Ayarla'}
+              {isLoading ? t('pass.settingUp') : t('pass.setupBtn')}
             </Button>
           </div>
         )}
 
         {message && (
-          <p className={`text-sm text-center font-medium ${message.includes('başarı') || message.includes('kaldırıldı') ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
+          <p className={`text-sm text-center font-medium ${message === t('pass.successSet') || message === t('pass.successRemove') ? 'text-green-600 dark:text-green-400' : 'text-red-500 dark:text-red-400'}`}>
             {message}
           </p>
         )}
 
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Şifre koruması aktif olduğunda, uygulamaya her girişte şifre istenecek ve tüm yerel veriler şifrelenmiş olarak saklanacaktır.
+          {t('pass.hint')}
         </p>
       </CardContent>
     </Card>

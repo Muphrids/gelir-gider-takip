@@ -12,7 +12,8 @@ import {
   X 
 } from 'lucide-react';
 import { format, parseISO, addMonths, subMonths, addYears, subYears, addDays, subDays } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { tr, enUS } from 'date-fns/locale';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Popover,
   PopoverContent,
@@ -21,10 +22,11 @@ import {
 import { Calendar } from '@/components/ui/calendar';
 
 function MonthPicker({ selectedDate, onSelect }: { selectedDate: Date; onSelect: (date: Date) => void }) {
+  const { t } = useLanguage();
   const [currentYear, setCurrentYear] = useState(selectedDate.getFullYear());
   const months = [
-    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
-    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+    t('month.jan'), t('month.feb'), t('month.mar'), t('month.apr'), t('month.may'), t('month.jun'),
+    t('month.jul'), t('month.aug'), t('month.sep'), t('month.oct'), t('month.nov'), t('month.dec')
   ];
 
   return (
@@ -147,6 +149,8 @@ export function FilterBar({
   maxAmount,
   onMaxAmountChange,
 }: FilterBarProps) {
+  const { t, language } = useLanguage();
+  const currentLocale = language === 'tr' ? tr : enUS;
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [startCalendarOpen, setStartCalendarOpen] = useState(false);
   const [endCalendarOpen, setEndCalendarOpen] = useState(false);
@@ -214,9 +218,9 @@ export function FilterBar({
 
     switch (viewMode) {
       case 'daily':
-        return format(date, 'dd MMMM yyyy', { locale: tr });
+        return format(date, 'dd MMMM yyyy', { locale: currentLocale });
       case 'monthly':
-        return format(date, 'MMMM yyyy', { locale: tr });
+        return format(date, 'MMMM yyyy', { locale: currentLocale });
       case 'yearly':
         return format(date, 'yyyy');
       default:
@@ -267,28 +271,28 @@ export function FilterBar({
           <div className="flex flex-wrap gap-2.5 sm:gap-4 items-center">
             {/* View Mode Selection */}
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Görünüm:</span>
+              <span className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">{t('filter.view')}</span>
               <div className="flex gap-0.5 sm:gap-1">
                 <Button
                   variant={viewMode === 'daily' ? 'default' : 'outline'}
                   className="h-8 px-2 text-xs sm:h-9 sm:px-3"
                   onClick={() => onViewModeChange('daily')}
                 >
-                  Günlük
+                  {t('filter.daily')}
                 </Button>
                 <Button
                   variant={viewMode === 'monthly' ? 'default' : 'outline'}
                   className="h-8 px-2 text-xs sm:h-9 sm:px-3"
                   onClick={() => onViewModeChange('monthly')}
                 >
-                  Aylık
+                  {t('filter.monthly')}
                 </Button>
                 <Button
                   variant={viewMode === 'yearly' ? 'default' : 'outline'}
                   className="h-8 px-2 text-xs sm:h-9 sm:px-3"
                   onClick={() => onViewModeChange('yearly')}
                 >
-                  Yıllık
+                  {t('filter.yearly')}
                 </Button>
               </div>
             </div>
@@ -303,7 +307,7 @@ export function FilterBar({
                 className="rounded border-gray-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 h-3.5 w-3.5 sm:h-4 sm:w-4 cursor-pointer"
               />
               <Label htmlFor="customRange" className="text-xs sm:text-sm cursor-pointer dark:text-gray-350">
-                Özel Tarih Aralığı
+                {t('filter.customRange')}
               </Label>
             </div>
           </div>
@@ -316,7 +320,7 @@ export function FilterBar({
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm" className="w-auto justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateRange.startDate ? format(parseISO(dateRange.startDate), 'dd.MM.yyyy') : 'Başlangıç'}
+                      {dateRange.startDate ? format(parseISO(dateRange.startDate), 'dd.MM.yyyy') : t('form.startDateShort')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -330,7 +334,7 @@ export function FilterBar({
                         }
                       }}
                       initialFocus
-                      locale={tr}
+                      locale={currentLocale}
                       className="rounded-md border"
                     />
                   </PopoverContent>
@@ -340,7 +344,7 @@ export function FilterBar({
                   <PopoverTrigger asChild>
                     <Button variant="outline" size="sm" className="w-auto justify-start text-left font-normal">
                       <CalendarIcon className="mr-2 h-4 w-4" />
-                      {dateRange.endDate ? format(parseISO(dateRange.endDate), 'dd.MM.yyyy') : 'Bitiş'}
+                      {dateRange.endDate ? format(parseISO(dateRange.endDate), 'dd.MM.yyyy') : t('form.endDateShort')}
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -354,7 +358,7 @@ export function FilterBar({
                         }
                       }}
                       initialFocus
-                      locale={tr}
+                      locale={currentLocale}
                       className="rounded-md border"
                     />
                   </PopoverContent>
@@ -380,7 +384,7 @@ export function FilterBar({
                         selected={parseISO(selectedDate)}
                         onSelect={handleDateSelect}
                         initialFocus
-                        locale={tr}
+                        locale={currentLocale}
                         className="rounded-md border"
                         defaultMonth={parseISO(selectedDate)}
                         transactionDayMap={transactionDayMap}
@@ -421,7 +425,7 @@ export function FilterBar({
               className="h-7 sm:h-8 text-xs sm:text-sm px-2.5 sm:px-3"
             >
               <SlidersHorizontal className="w-3.5 h-3.5 mr-1 sm:mr-1.5" />
-              Gelişmiş Filtreler
+              {t('filter.advanced')}
               {isFilterActive && (
                 <span className="ml-1.5 w-2 h-2 rounded-full bg-red-500 animate-pulse" />
               )}
@@ -435,7 +439,7 @@ export function FilterBar({
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
               {/* Description Search */}
               <div className="md:col-span-4 space-y-1.5">
-                <Label htmlFor="search-input" className="text-xs font-semibold text-gray-700 dark:text-gray-300">İşlem Açıklaması</Label>
+                <Label htmlFor="search-input" className="text-xs font-semibold text-gray-700 dark:text-gray-300">{t('filter.txDesc')}</Label>
                 <div className="relative">
                   <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
@@ -443,7 +447,7 @@ export function FilterBar({
                     type="text"
                     value={searchQuery}
                     onChange={(e) => onSearchQueryChange(e.target.value)}
-                    placeholder="Açıklamalarda ara..."
+                    placeholder={t('filter.searchPlaceholder')}
                     className="w-full text-xs pl-9 pr-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   {searchQuery && (
@@ -460,29 +464,29 @@ export function FilterBar({
 
               {/* Payment Method Filter */}
               <div className="md:col-span-3 space-y-1.5">
-                <Label htmlFor="payment-method-filter" className="text-xs font-semibold text-gray-700 dark:text-gray-300">Ödeme Yöntemi</Label>
+                <Label htmlFor="payment-method-filter" className="text-xs font-semibold text-gray-700 dark:text-gray-300">{t('general.paymentMethod')}</Label>
                 <select
                   id="payment-method-filter"
                   value={selectedPaymentMethod}
                   onChange={(e) => onSelectedPaymentMethodChange(e.target.value)}
                   className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-blue-500"
                 >
-                  <option value="all" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Tüm Yöntemler</option>
-                  <option value="cash" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">💵 Sadece Nakit</option>
-                  <option value="credit_card" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">💳 Sadece Kredi Kartı</option>
-                  <option value="none" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Belirtilmemiş</option>
+                  <option value="all" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{t('filter.allMethods')}</option>
+                  <option value="cash" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{t('filter.cashOnly')}</option>
+                  <option value="credit_card" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{t('filter.cardOnly')}</option>
+                  <option value="none" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{t('general.none')}</option>
                 </select>
               </div>
 
               {/* Amount Range Filter */}
               <div className="md:col-span-5 space-y-1.5">
-                <Label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Tutar Aralığı</Label>
+                <Label className="text-xs font-semibold text-gray-700 dark:text-gray-300">{t('filter.amountRange')}</Label>
                 <div className="flex items-center gap-2">
                   <input
                     type="number"
                     value={minAmount}
                     onChange={(e) => onMinAmountChange(e.target.value)}
-                    placeholder="Min Tutar"
+                    placeholder={t('filter.minAmount')}
                     className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-blue-500"
                   />
                   <span className="text-gray-400 text-xs">-</span>
@@ -490,7 +494,7 @@ export function FilterBar({
                     type="number"
                     value={maxAmount}
                     onChange={(e) => onMaxAmountChange(e.target.value)}
-                    placeholder="Max Tutar"
+                    placeholder={t('filter.maxAmount')}
                     className="w-full text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-blue-500"
                   />
                 </div>
@@ -501,14 +505,14 @@ export function FilterBar({
             {categories.length > 0 && (
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Kategoriler</span>
+                  <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">{t('filter.categories')}</span>
                   {selectedCategories.length > 0 && (
                     <button
                       type="button"
                       onClick={() => onSelectedCategoriesChange([])}
                       className="text-[10px] font-bold text-blue-600 hover:text-blue-750 uppercase"
                     >
-                      Seçimi Temizle
+                      {t('filter.clearSelection')}
                     </button>
                   )}
                 </div>
@@ -548,7 +552,7 @@ export function FilterBar({
                   className="text-xs font-semibold text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
                 >
                   <X className="w-4 h-4 mr-1" />
-                  Tüm Filtreleri Sıfırla
+                  {t('filter.resetAll')}
                 </Button>
               </div>
             )}

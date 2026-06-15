@@ -4,6 +4,7 @@ import type { UseCloudSyncResult } from '@/hooks/useCloudSync';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Cloud,
   LogOut,
@@ -20,6 +21,7 @@ interface CloudSyncProps {
 
 export function CloudSync({ cloudSync }: CloudSyncProps) {
   const { user, signOut } = useAuth();
+  const { t } = useLanguage();
   const {
     localStatus,
     localError,
@@ -34,12 +36,12 @@ export function CloudSync({ cloudSync }: CloudSyncProps) {
   const isBusy = localStatus === 'loading';
 
   const statusText = (() => {
-    if (!supabase) return 'Supabase yapılandırılmamış (.env dosyasını kontrol edin).';
-    if (localStatus === 'loading') return 'Bulut işlemi yapılıyor...';
-    if (localStatus === 'success') return 'Bulut işlemi başarılı.';
-    if (localStatus === 'error') return 'Bulut işlemi başarısız.';
-    if (!isOnline) return 'Çevrimdışı moddasınız.';
-    return 'Buluta bağlısınız.';
+    if (!supabase) return t('cloud.notConfigured');
+    if (localStatus === 'loading') return t('cloud.loading');
+    if (localStatus === 'success') return t('cloud.success');
+    if (localStatus === 'error') return t('cloud.error');
+    if (!isOnline) return t('cloud.offline');
+    return t('cloud.connected');
   })();
 
   return (
@@ -47,7 +49,7 @@ export function CloudSync({ cloudSync }: CloudSyncProps) {
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <Cloud className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-          Bulut Senkronizasyonu
+          {t('cloud.title')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -55,9 +57,7 @@ export function CloudSync({ cloudSync }: CloudSyncProps) {
           <Alert variant="destructive">
             <AlertCircle className="w-4 h-4" />
             <AlertDescription>
-              Supabase ayarları yapılmamış. Lütfen `.env` dosyanıza
-              <br />
-              <code>VITE_SUPABASE_URL</code> ve <code>VITE_SUPABASE_ANON_KEY</code> ekleyin.
+              {t('cloud.envMissing')}
             </AlertDescription>
           </Alert>
         )}
@@ -79,7 +79,7 @@ export function CloudSync({ cloudSync }: CloudSyncProps) {
                 )}
                 <div className="min-w-0">
                   <p className="font-medium text-blue-900 dark:text-blue-200 truncate">
-                    {user.displayName ?? user.email ?? 'Google kullanıcısı'}
+                    {user.displayName ?? user.email ?? t('cloud.googleUser')}
                   </p>
                   {user.email && (
                     <p className="text-xs text-blue-700 dark:text-blue-300 truncate">{user.email}</p>
@@ -94,14 +94,14 @@ export function CloudSync({ cloudSync }: CloudSyncProps) {
                 className="flex items-center gap-1 shrink-0 text-blue-700 dark:text-blue-200 hover:text-blue-900 dark:hover:text-blue-100 hover:bg-blue-100/50 dark:hover:bg-blue-900/30"
               >
                 <LogOut className="w-4 h-4" />
-                Çıkış
+                {t('cloud.signOut')}
               </Button>
             </div>
 
             <div className="border border-gray-200 dark:border-white/10 rounded-lg p-3 space-y-2 bg-gray-50 dark:bg-slate-800/40">
-              <p className="text-sm font-medium text-red-700 dark:text-red-400">Bulut Verilerini Sil</p>
+              <p className="text-sm font-medium text-red-700 dark:text-red-400">{t('cloud.deleteTitle')}</p>
               <p className="text-xs text-red-600 dark:text-red-300/80">
-                Bu işlem buluttaki verilerinizi siler ve çıkış yapar.
+                {t('cloud.deleteDesc')}
               </p>
               <Button
                 variant="destructive"
@@ -111,7 +111,7 @@ export function CloudSync({ cloudSync }: CloudSyncProps) {
                 className="flex items-center gap-1"
               >
                 <Trash2 className="w-4 h-4" />
-                Bulut Verilerini Sil
+                {t('cloud.deleteBtn')}
               </Button>
             </div>
           </div>
@@ -149,11 +149,11 @@ export function CloudSync({ cloudSync }: CloudSyncProps) {
                   : 'bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-300'
               }`}
             >
-              {isOnline ? 'Çevrimiçi' : 'Çevrimdışı'}
+              {isOnline ? t('cloud.online') : t('cloud.offlineBadge')}
             </span>
             {isSyncPending && !isBusy && (
               <span className="text-[10px] bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded font-bold animate-pulse">
-                Eşitleme Bekliyor
+                {t('cloud.syncPending')}
               </span>
             )}
           </div>
@@ -168,7 +168,7 @@ export function CloudSync({ cloudSync }: CloudSyncProps) {
             disabled={!user || !supabase || isBusy}
           >
             <Upload className="w-4 h-4" />
-            Buluta Yükle
+            {t('cloud.uploadBtn')}
           </Button>
           <Button
             variant="outline"
@@ -178,14 +178,12 @@ export function CloudSync({ cloudSync }: CloudSyncProps) {
             disabled={!user || !supabase || isBusy}
           >
             <Download className="w-4 h-4" />
-            Buluttan İndir
+            {t('cloud.downloadBtn')}
           </Button>
         </div>
 
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          Verileriniz Supabase üzerinde kullanıcı hesabınıza bağlı olarak saklanır.
-          İsterseniz cihazınızda yerel olarak tutulmaya devam eder; buluta yükleme
-          ve indirme işlemleri tamamen sizin kontrolünüzdedir.
+          {t('cloud.hint')}
         </p>
       </CardContent>
     </Card>

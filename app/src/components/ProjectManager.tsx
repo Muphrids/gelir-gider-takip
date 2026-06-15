@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Dialog,
   DialogContent,
@@ -39,6 +40,7 @@ export function ProjectManager({
   selectedProject,
   onSelectProject,
 }: ProjectManagerProps) {
+  const { t } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -100,7 +102,7 @@ export function ProjectManager({
         <CardTitle className="text-lg flex items-center justify-between">
           <span className="flex items-center gap-2">
             <Briefcase className="w-5 h-5" />
-            Şirketler / Projeler
+            {t('proj.title')}
           </span>
           <Button size="sm" onClick={() => {
             setEditingProject(null);
@@ -111,7 +113,7 @@ export function ProjectManager({
             setIsOpen(true);
           }}>
             <Plus className="w-4 h-4 mr-1" />
-            Yeni
+            {t('proj.new')}
           </Button>
         </CardTitle>
       </CardHeader>
@@ -127,7 +129,7 @@ export function ProjectManager({
             }`}
           >
             <div className="w-4 h-4 rounded-full bg-gray-400" />
-            <span className="font-medium">Tüm Şirketler</span>
+            <span className="font-medium">{t('proj.all')}</span>
           </button>
         </div>
 
@@ -135,7 +137,7 @@ export function ProjectManager({
         <div className="space-y-2 max-h-64 overflow-y-auto">
           {projects.length === 0 ? (
             <p className="text-center text-gray-500 py-4">
-              Henüz şirket/proje eklenmemiş
+              {t('proj.empty')}
             </p>
           ) : (
             projects.map((project) => (
@@ -162,7 +164,7 @@ export function ProjectManager({
                     )}
                   </div>
                   {!project.isActive && (
-                    <span className="text-xs bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">Pasif</span>
+                    <span className="text-xs bg-gray-200 dark:bg-slate-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">{t('proj.passive')}</span>
                   )}
                 </button>
                 <Button
@@ -194,36 +196,36 @@ export function ProjectManager({
       }}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingProject ? 'Şirket/Projeyi Düzenle' : 'Yeni Şirket/Proje Ekle'}</DialogTitle>
+            <DialogTitle>{editingProject ? t('proj.editTitle') : t('proj.addTitle')}</DialogTitle>
             <DialogDescription>
-              {editingProject ? 'Şirket veya proje detaylarını güncelleyin.' : 'Yeni bir şirket veya proje oluşturun.'}
+              {editingProject ? t('proj.editDesc') : t('proj.addDesc')}
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="proj-name">Ad</Label>
+              <Label htmlFor="proj-name">{t('proj.nameLabel')}</Label>
               <Input
                 id="proj-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Örn: Ana Şirket, Proje A..."
+                placeholder={t('proj.namePlaceholder')}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="proj-description">Açıklama (Opsiyonel)</Label>
+              <Label htmlFor="proj-description">{t('proj.descLabel')}</Label>
               <Textarea
                 id="proj-description"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Şirket/proje hakkında kısa bilgi..."
+                placeholder={t('proj.descPlaceholder')}
                 rows={2}
               />
             </div>
 
             <div className="space-y-2">
-              <Label>Renk</Label>
+              <Label>{t('proj.colorLabel')}</Label>
               <div className="flex flex-wrap gap-2">
                 {PRESET_COLORS.map((c) => (
                   <button
@@ -246,7 +248,7 @@ export function ProjectManager({
                 onCheckedChange={(checked) => setIsActive(checked as boolean)}
               />
               <Label htmlFor="proj-active" className="cursor-pointer">
-                Aktif
+                {t('proj.activeLabel')}
               </Label>
             </div>
 
@@ -255,10 +257,10 @@ export function ProjectManager({
                 setIsOpen(false);
                 setEditingProject(null);
               }}>
-                İptal
+                {t('general.cancel')}
               </Button>
               <Button type="submit" disabled={!name.trim()}>
-                {editingProject ? 'Güncelle' : 'Ekle'}
+                {editingProject ? t('cat.updateBtn') : t('cat.addBtn')}
               </Button>
             </DialogFooter>
           </form>
@@ -269,17 +271,17 @@ export function ProjectManager({
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Şirket/Projeyi Sil</DialogTitle>
+            <DialogTitle>{t('proj.deleteTitle')}</DialogTitle>
             <DialogDescription>
-              Bu şirket/projeyi silmek istediğinizden emin misiniz? Bu işleme ait işlemler genel kategoriye taşınacaktır.
+              {t('proj.deleteDesc')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)}>
-              İptal
+              {t('general.cancel')}
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              Sil
+              {t('general.delete')}
             </Button>
           </DialogFooter>
         </DialogContent>
