@@ -176,6 +176,11 @@ function App() {
     setIsLocked(isPasswordRequired && !isDecrypted);
   }, [isPasswordRequired, isDecrypted]);
 
+  // Sync goalProject with selectedProject
+  useEffect(() => {
+    setGoalProject(selectedProject || '');
+  }, [selectedProject]);
+
   useEffect(() => {
     if (isLoaded && !isLocked) {
       const lastSeen = localStorage.getItem('gelir-gider-last-seen-version');
@@ -720,7 +725,7 @@ function App() {
     setGoalName('');
     setGoalTarget('');
     setGoalDate('');
-    setGoalProject('');
+    setGoalProject(selectedProject || '');
     toast.success('Finansal hedef başarıyla belirlendi.');
   };
 
