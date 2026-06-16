@@ -3,9 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { formatCurrency } from '@/lib/utils';
 import { parseISO, isSameMonth, isSameYear, format } from 'date-fns';
-import { tr } from 'date-fns/locale';
+import { tr, enUS } from 'date-fns/locale';
 import type { Transaction, Category } from '@/types';
 import { Sparkles, AlertTriangle, ShieldCheck } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface BudgetProgressProps {
   transactions: Transaction[];
@@ -20,6 +21,9 @@ export function BudgetProgress({
   selectedDate,
   projectId,
 }: BudgetProgressProps) {
+  const { t, language } = useLanguage();
+  const locale = language === 'tr' ? tr : enUS;
+
   const parsedSelectedDate = useMemo(() => {
     try {
       return parseISO(selectedDate);
@@ -75,8 +79,8 @@ export function BudgetProgress({
   }, [budgetedCategories, monthlyExpenses]);
 
   const monthName = useMemo(() => {
-    return format(parsedSelectedDate, 'MMMM yyyy', { locale: tr });
-  }, [parsedSelectedDate]);
+    return format(parsedSelectedDate, 'MMMM yyyy', { locale });
+  }, [parsedSelectedDate, locale]);
 
   if (budgetStats.length === 0) {
     return null; // Don't show if no budgets are configured
@@ -87,7 +91,7 @@ export function BudgetProgress({
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-lg flex items-center gap-2">
           <Sparkles className="w-5 h-5 text-blue-600 animate-pulse" />
-          Aylık Bütçe Takip Limitleri ({monthName})
+          {t('cat.budgetTrackingTitle', {}, 'Aylık Bütçe Takip Limitleri')} ({monthName})
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -120,7 +124,7 @@ export function BudgetProgress({
                       style={{ backgroundColor: category.color }}
                     />
                     <span className="font-semibold text-sm text-gray-900 dark:text-gray-150 truncate">
-                      {category.name}
+                      {t(`category.${category.name}`, {}, category.name)}
                     </span>
                   </div>
                   <div className={`flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold border ${statusColor}`}>
@@ -132,8 +136,8 @@ export function BudgetProgress({
                 <Progress value={percentage} className={`h-2.5 ${barColor}`} />
 
                 <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">
-                  <span>Harcama: <strong className="text-gray-700 dark:text-gray-200">{formatCurrency(spent)}</strong></span>
-                  <span>Limit: <strong className="text-gray-800 dark:text-gray-300">{formatCurrency(limit)}</strong></span>
+                  <span>{t('cat.spentLabel', {}, 'Harcama')}: <strong className="text-gray-700 dark:text-gray-200">{formatCurrency(spent)}</strong></span>
+                  <span>{t('cat.limitLabel', {}, 'Limit')}: <strong className="text-gray-800 dark:text-gray-300">{formatCurrency(limit)}</strong></span>
                 </div>
               </div>
             );

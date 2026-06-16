@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { useLanguage } from '@/contexts/LanguageContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ComposedChart,
@@ -42,19 +43,19 @@ interface SimulatedItem {
   description: string;
 }
 
-const MONTH_NAMES = [
-  'Ocak',
-  'Şubat',
-  'Mart',
-  'Nisan',
-  'Mayıs',
-  'Haziran',
-  'Temmuz',
-  'Ağustos',
-  'Eylül',
-  'Ekim',
-  'Kasım',
-  'Aralık',
+const MONTH_KEYS = [
+  'month.jan',
+  'month.feb',
+  'month.mar',
+  'month.apr',
+  'month.may',
+  'month.jun',
+  'month.jul',
+  'month.aug',
+  'month.sep',
+  'month.oct',
+  'month.nov',
+  'month.dec',
 ];
 
 export function CashFlowForecastChart({
@@ -64,6 +65,7 @@ export function CashFlowForecastChart({
   selectedDate,
   savingsGoals = [],
 }: CashFlowForecastChartProps) {
+  const { t } = useLanguage();
   // 1. State for Critical Balance limit
   const [criticalBalance, setCriticalBalance] = useState<number>(() => {
     const saved = localStorage.getItem('gelir-gider-critical-balance');
@@ -105,10 +107,10 @@ export function CashFlowForecastChart({
       const d = addMonths(startDate, i);
       return {
         index: i,
-        label: `${MONTH_NAMES[d.getMonth()]} ${d.getFullYear()}`,
+        label: `${t(MONTH_KEYS[d.getMonth()])} ${d.getFullYear()}`,
       };
     });
-  }, [selectedDate]);
+  }, [selectedDate, t]);
 
   // Handle add simulated transaction
   const handleAddSimulatedItem = (e: React.FormEvent) => {
@@ -121,7 +123,7 @@ export function CashFlowForecastChart({
       monthIndex: simMonth,
       amount: amt,
       type: simType,
-      description: simDesc.trim() || (simType === 'income' ? 'Simüle Gelir' : 'Simüle Gider'),
+      description: simDesc.trim() || (simType === 'income' ? t('chart.simIncomeDefault', {}, 'Simüle Gelir') : t('chart.simExpenseDefault', {}, 'Simüle Gider')),
     };
 
     setSimulatedItems((prev) => [...prev, newItem]);
@@ -207,7 +209,7 @@ export function CashFlowForecastChart({
       const targetDate = addMonths(startDate, i);
       const targetYear = targetDate.getFullYear();
       const targetMonth = targetDate.getMonth() + 1; // 1-indexed
-      const monthName = MONTH_NAMES[targetMonth - 1];
+      const monthName = t(MONTH_KEYS[targetMonth - 1]);
       const label = `${monthName} ${targetYear.toString().slice(-2)}`;
 
       // 1. Calculate Recurring configurations
@@ -289,7 +291,7 @@ export function CashFlowForecastChart({
       dippedMonthsNormal,
       dippedMonthsSimulated,
     };
-  }, [transactions, recurringTransactions, currentBalance, selectedDate, simulatedItems, criticalBalance]);
+  }, [transactions, recurringTransactions, currentBalance, selectedDate, simulatedItems, criticalBalance, t]);
 
   // Process goal statuses and match them with projection months
   const goalsAnalysis = useMemo(() => {
@@ -364,30 +366,30 @@ export function CashFlowForecastChart({
       return (
         <div className="bg-white dark:bg-slate-900 p-4 border dark:border-white/10 rounded-xl shadow-xl space-y-2 text-xs">
           <p className="font-bold text-gray-900 dark:text-white mb-2 pb-1 border-b dark:border-white/5 flex items-center justify-between">
-            <span>{label} (Öngörü)</span>
+            <span>{label} ({t('general.prediction', {}, 'Öngörü')})</span>
           </p>
           <div className="space-y-1.5 min-w-[180px]">
             {payload.find((p: any) => p.dataKey === 'Beklenen Gelir') && (
               <p className="text-green-600 dark:text-green-400 flex items-center justify-between gap-4">
-                <span>Beklenen Gelir:</span>
+                <span>{t('chart.projectedIncome', {}, 'Beklenen Gelir')}:</span>
                 <span className="font-semibold">{formatCurrency(payload.find((p: any) => p.dataKey === 'Beklenen Gelir').value)}</span>
               </p>
             )}
             {payload.find((p: any) => p.dataKey === 'Beklenen Gider') && (
               <p className="text-red-600 dark:text-red-400 flex items-center justify-between gap-4">
-                <span>Beklenen Gider:</span>
+                <span>{t('chart.projectedExpense', {}, 'Beklenen Gider')}:</span>
                 <span className="font-semibold">{formatCurrency(payload.find((p: any) => p.dataKey === 'Beklenen Gider').value)}</span>
               </p>
             )}
             {payload.find((p: any) => p.dataKey === 'Tahmini Bakiye') && (
               <p className="text-blue-600 dark:text-blue-400 flex items-center justify-between gap-4 border-t dark:border-white/5 pt-1.5 font-semibold">
-                <span>Tahmini Bakiye:</span>
+                <span>{t('chart.projectedBalance', {}, 'Tahmini Bakiye')}:</span>
                 <span>{formatCurrency(payload.find((p: any) => p.dataKey === 'Tahmini Bakiye').value)}</span>
               </p>
             )}
             {simulatedItems.length > 0 && payload.find((p: any) => p.dataKey === 'Simüle Edilen Bakiye') && (
               <p className="text-purple-600 dark:text-purple-400 flex items-center justify-between gap-4 border-t dark:border-white/5 pt-1 font-semibold">
-                <span>Simüle Bakiye:</span>
+                <span>{t('chart.simulatedBalance', {}, 'Simüle Bakiye')}:</span>
                 <span>{formatCurrency(payload.find((p: any) => p.dataKey === 'Simüle Edilen Bakiye').value)}</span>
               </p>
             )}
@@ -405,16 +407,16 @@ export function CashFlowForecastChart({
         <div>
           <CardTitle className="text-lg flex items-center gap-2 dark:text-white">
             <TrendingUp className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-            Gelişmiş Nakit Akışı Öngörüsü
+            {t('chart.cashFlowTitle', {}, 'Gelişmiş Nakit Akışı Öngörüsü')}
           </CardTitle>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-            Sabit planlamalar ve geçmiş değişken harcama alışkanlıklarına göre 6 aylık akış tahmini.
+            {t('chart.cashFlowDesc', {}, 'Sabit planlamalar ve geçmiş değişken harcama alışkanlıklarına göre 6 aylık akış tahmini.')}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 rounded-full border border-blue-200/50 dark:border-blue-900/30 flex items-center gap-1.5 animate-pulse">
             <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-            Tüm Geçmiş Trend Analizi Aktif
+            {t('chart.trendAnalysisActive', {}, 'Tüm Geçmiş Trend Analizi Aktif')}
           </span>
         </div>
       </CardHeader>
@@ -426,8 +428,8 @@ export function CashFlowForecastChart({
           <div className="col-span-1 lg:col-span-5 space-y-3">
             <div className="flex items-center justify-between">
               <label htmlFor="critical-balance-input" className="text-xs font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-1">
-                Kritik Bakiye Sınırı
-                <span title="Bakiyeniz bu limitin altına indiğinde grafik ve uyarı afişi sizi uyarır.">
+                {t('chart.criticalBalanceLimit', {}, 'Kritik Bakiye Sınırı')}
+                <span title={t('chart.criticalBalanceTooltip', {}, 'Bakiyeniz bu limitin altına indiğinde grafik ve uyarı afişi sizi uyarır.')}>
                   <HelpCircle className="w-3.5 h-3.5 text-gray-400 cursor-pointer" />
                 </span>
               </label>
@@ -459,7 +461,7 @@ export function CashFlowForecastChart({
 
           {/* Visibility Toggles */}
           <div className="col-span-1 lg:col-span-7 space-y-3">
-            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 block">Grafikte Gösterilecek Veriler</span>
+            <span className="text-xs font-semibold text-gray-700 dark:text-gray-300 block">{t('chart.visibleSeries', {}, 'Grafikte Gösterilecek Veriler')}</span>
             <div className="flex flex-wrap gap-4 pt-1">
               <label className="flex items-center gap-2 text-xs font-medium cursor-pointer text-gray-600 dark:text-gray-300 select-none">
                 <input
@@ -470,7 +472,7 @@ export function CashFlowForecastChart({
                 />
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-full bg-blue-500"></span>
-                  Tahmini Bakiye
+                  {t('chart.projectedBalance', {}, 'Tahmini Bakiye')}
                 </span>
               </label>
 
@@ -484,7 +486,7 @@ export function CashFlowForecastChart({
                   />
                   <span className="flex items-center gap-1.5">
                     <span className="w-3.5 h-1 border-t-2 border-dashed border-purple-500"></span>
-                    Simüle Edilen Bakiye
+                    {t('chart.simulatedBalance', {}, 'Simüle Bakiye')}
                   </span>
                 </label>
               )}
@@ -498,7 +500,7 @@ export function CashFlowForecastChart({
                 />
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-full bg-green-500"></span>
-                  Beklenen Gelir
+                  {t('chart.projectedIncome', {}, 'Beklenen Gelir')}
                 </span>
               </label>
 
@@ -511,7 +513,7 @@ export function CashFlowForecastChart({
                 />
                 <span className="flex items-center gap-1.5">
                   <span className="w-3 h-3 rounded-full bg-red-500"></span>
-                  Beklenen Gider
+                  {t('chart.projectedExpense', {}, 'Beklenen Gider')}
                 </span>
               </label>
             </div>
@@ -525,9 +527,11 @@ export function CashFlowForecastChart({
               <div className="flex items-start gap-3 p-4 rounded-xl bg-amber-50 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/30 text-amber-800 dark:text-amber-300">
                 <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-amber-600" />
                 <div className="text-xs">
-                  <span className="font-bold">Bakiye Düşüş Uyarısı:</span> Cari tahmin gidişatınızda bakiyeniz,{' '}
-                  <span className="font-semibold">{forecastResult.dippedMonthsNormal.join(', ')}</span> aylarında belirlediğiniz kritik limit olan{' '}
-                  <span className="font-bold">{formatCurrency(criticalBalance)}</span> altına düşüyor! Finansal tedbir almayı düşünebilirsiniz.
+                  <span className="font-bold">{t('chart.balanceDropWarningTitle', {}, 'Bakiye Düşüş Uyarısı')}:</span>{' '}
+                  {t('chart.balanceWarningDesc', {
+                    months: forecastResult.dippedMonthsNormal.join(', '),
+                    limit: formatCurrency(criticalBalance)
+                  }, `Cari tahmin gidişatınızda bakiyeniz, ${forecastResult.dippedMonthsNormal.join(', ')} aylarında belirlediğiniz kritik limit olan ${formatCurrency(criticalBalance)} altına düşüyor! Finansal tedbir almayı düşünebilirsiniz.`)}
                 </div>
               </div>
             )}
@@ -536,8 +540,10 @@ export function CashFlowForecastChart({
               <div className="flex items-start gap-3 p-4 rounded-xl bg-purple-50 dark:bg-purple-950/20 border border-purple-200/60 dark:border-purple-900/30 text-purple-800 dark:text-purple-300 animate-in fade-in duration-200">
                 <AlertTriangle className="w-5 h-5 shrink-0 mt-0.5 text-purple-600" />
                 <div className="text-xs">
-                  <span className="font-bold">Simüle Bakiye Düşüş Uyarısı:</span> Eklediğiniz simülasyon senaryosuna göre bakiyeniz,{' '}
-                  <span className="font-semibold">{forecastResult.dippedMonthsSimulated.join(', ')}</span> aylarında kritik sınırın altına geriliyor.
+                  <span className="font-bold">{t('chart.simulatedBalanceDropWarningTitle', {}, 'Simüle Bakiye Düşüş Uyarısı')}:</span>{' '}
+                  {t('chart.simulatedBalanceWarningDesc', {
+                    months: forecastResult.dippedMonthsSimulated.join(', ')
+                  }, `Eklediğiniz simülasyon senaryosuna göre bakiyeniz, ${forecastResult.dippedMonthsSimulated.join(', ')} aylarında kritik sınırın altına geriliyor.`)}
                 </div>
               </div>
             )}
@@ -604,6 +610,7 @@ export function CashFlowForecastChart({
                 <Area
                   type="monotone"
                   dataKey="Tahmini Bakiye"
+                  name={t('chart.projectedBalance', {}, 'Tahmini Bakiye')}
                   stroke="#3b82f6"
                   fillOpacity={1}
                   fill="url(#colorBalance)"
@@ -617,6 +624,7 @@ export function CashFlowForecastChart({
                 <Line
                   type="monotone"
                   dataKey="Simüle Edilen Bakiye"
+                  name={t('chart.simulatedBalance', {}, 'Simüle Bakiye')}
                   stroke="#8b5cf6"
                   strokeWidth={2}
                   strokeDasharray="5 5"
@@ -630,6 +638,7 @@ export function CashFlowForecastChart({
                 <Line
                   type="monotone"
                   dataKey="Beklenen Gelir"
+                  name={t('chart.projectedIncome', {}, 'Beklenen Gelir')}
                   stroke="#10b981"
                   strokeWidth={1.5}
                   dot={{ r: 3 }}
@@ -642,6 +651,7 @@ export function CashFlowForecastChart({
                 <Line
                   type="monotone"
                   dataKey="Beklenen Gider"
+                  name={t('chart.projectedExpense', {}, 'Beklenen Gider')}
                   stroke="#f43f5e"
                   strokeWidth={1.5}
                   dot={{ r: 3 }}
@@ -657,19 +667,19 @@ export function CashFlowForecastChart({
           <div className="flex items-start gap-2.5">
             <Info className="w-4.5 h-4.5 text-blue-600 shrink-0 mt-0.5" />
             <div className="space-y-0.5">
-              <span className="font-bold text-gray-800 dark:text-gray-200">Değişken Gider & Gelir Analizi Nasıl Hesaplanır?</span>
+              <span className="font-bold text-gray-800 dark:text-gray-200">{t('chart.calcExplanationTitle', {}, 'Değişken Gider & Gelir Analizi Nasıl Hesaplanır?')}</span>
               <p className="text-gray-500 dark:text-gray-400">
-                Girdiğiniz tüm geçmiş ({forecastResult.monthsCount} ay) veriler taranarak, her ay yinelenen sabit işlemleriniz ayıklandıktan sonra kalan değişken gelir/giderlerinizin aylık ortalaması alınır ve tahmin modeline dahil edilir.
+                {t('chart.calcExplanationDesc', { months: forecastResult.monthsCount }, `Girdiğiniz tüm geçmiş (${forecastResult.monthsCount} ay) veriler taranarak, her ay yinelenen sabit işlemleriniz ayıklandıktan sonra kalan değişken gelir/giderlerinizin aylık ortalaması alınır ve tahmin modeline dahil edilir.`)}
               </p>
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4 shrink-0 border-t md:border-t-0 md:border-l border-gray-200 dark:border-white/10 pt-3 md:pt-0 md:pl-6">
             <div>
-              <span className="text-gray-500 dark:text-gray-400 block text-[10px] uppercase tracking-wider font-semibold">Ort. Değişken Gelir</span>
+              <span className="text-gray-500 dark:text-gray-400 block text-[10px] uppercase tracking-wider font-semibold">{t('chart.avgVarIncome', {}, 'Ort. Değişken Gelir')}</span>
               <span className="font-bold text-green-600">+{formatCurrency(forecastResult.avgVariableIncome)}</span>
             </div>
             <div>
-              <span className="text-gray-500 dark:text-gray-400 block text-[10px] uppercase tracking-wider font-semibold">Ort. Değişken Gider</span>
+              <span className="text-gray-500 dark:text-gray-400 block text-[10px] uppercase tracking-wider font-semibold">{t('chart.avgVarExpense', {}, 'Ort. Değişken Gider')}</span>
               <span className="font-bold text-red-500">-{formatCurrency(forecastResult.avgVariableExpense)}</span>
             </div>
           </div>
@@ -683,10 +693,10 @@ export function CashFlowForecastChart({
           >
             <h4 className="text-sm font-bold flex items-center gap-1.5 text-gray-800 dark:text-white">
               <HelpCircle className="w-4.5 h-4.5 text-purple-600" />
-              "Ya Şöyle Olursa?" Senaryo Simülasyonu
+              {t('chart.simTitle', {}, '"Ya Şöyle Olursa?" Senaryo Simülasyonu')}
             </h4>
             <div className="flex items-center gap-2">
-              <span className="md:hidden text-xs text-purple-500 font-semibold">{isSimulationExpanded ? 'Gizle' : 'Göster'}</span>
+              <span className="md:hidden text-xs text-purple-500 font-semibold">{isSimulationExpanded ? t('general.showHide', {}, 'Göster/Gizle').split('/')[1] : t('general.showHide', {}, 'Göster/Gizle').split('/')[0]}</span>
               {simulatedItems.length > 0 && (
                 <button
                   type="button"
@@ -694,7 +704,7 @@ export function CashFlowForecastChart({
                   className="text-[11px] font-semibold text-purple-600 hover:text-purple-750 flex items-center gap-1 bg-purple-50 dark:bg-purple-950/20 px-2.5 py-1 rounded-lg border border-purple-200 dark:border-purple-900/30 transition-all cursor-pointer"
                 >
                   <RefreshCw className="w-3 h-3" />
-                  Senaryoyu Sıfırla
+                  {t('chart.simReset', {}, 'Senaryoyu Sıfırla')}
                 </button>
               )}
             </div>
@@ -702,13 +712,13 @@ export function CashFlowForecastChart({
           
           <div className={isSimulationExpanded ? 'block space-y-4' : 'hidden md:block md:space-y-4'}>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Gelecek 6 aya ait tahmini gelir veya gider senaryoları ekleyerek bakiyenizin nasıl etkileneceğini anlık olarak grafikte gözlemleyin. Eklediğiniz işlemler geçicidir ve veri tabanına kaydedilmez.
+              {t('chart.simDesc', {}, 'Gelecek 6 aya ait tahmini gelir veya gider senaryoları ekleyerek bakiyenizin nasıl etkileneceğini anlık olarak grafikte gözlemleyin. Eklediğiniz işlemler geçicidir ve veri tabanına kaydedilmez.')}
             </p>
 
             <form onSubmit={handleAddSimulatedItem} className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end bg-purple-50/10 dark:bg-purple-950/5 p-3 sm:p-4 rounded-xl border border-purple-200/30 dark:border-purple-900/10">
               {/* Month Dropdown */}
               <div className="sm:col-span-3 space-y-1">
-                <label htmlFor="sim-month" className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Hedef Ay</label>
+                <label htmlFor="sim-month" className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('chart.simTargetMonth', {}, 'Hedef Ay')}</label>
                 <select
                   id="sim-month"
                   value={simMonth}
@@ -725,27 +735,27 @@ export function CashFlowForecastChart({
 
               {/* Type Selector */}
               <div className="sm:col-span-2 space-y-1">
-                <label htmlFor="sim-type" className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tür</label>
+                <label htmlFor="sim-type" className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('general.type', {}, 'Tür')}</label>
                 <select
                   id="sim-type"
                   value={simType}
                   onChange={(e) => setSimType(e.target.value as 'income' | 'expense')}
                   className="w-full text-xs font-semibold px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-purple-500"
                 >
-                  <option value="income" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Gelir (+)</option>
-                  <option value="expense" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">Gider (-)</option>
+                  <option value="income" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{t('chart.simIncomeOption', {}, 'Gelir (+)')}</option>
+                  <option value="expense" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100">{t('chart.simExpenseOption', {}, 'Gider (-)')}</option>
                 </select>
               </div>
 
               {/* Amount input */}
               <div className="sm:col-span-3 space-y-1">
-                <label htmlFor="sim-amount" className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tutar ({getCurrencySymbol()})</label>
+                <label htmlFor="sim-amount" className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('chart.simAmountLabel', { symbol: getCurrencySymbol() }, `Tutar (${getCurrencySymbol()})`)}</label>
                 <input
                   id="sim-amount"
                   type="number"
                   value={simAmount}
                   onChange={(e) => setSimAmount(e.target.value)}
-                  placeholder="Örn: 25000"
+                  placeholder={t('chart.simAmountPlaceholder', {}, 'Örn: 25000')}
                   className="w-full text-xs font-semibold px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-purple-500"
                   required
                 />
@@ -753,13 +763,13 @@ export function CashFlowForecastChart({
 
               {/* Description input */}
               <div className="sm:col-span-3 space-y-1">
-                <label htmlFor="sim-desc" className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">Açıklama</label>
+                <label htmlFor="sim-desc" className="text-[10px] font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">{t('general.description', {}, 'Açıklama')}</label>
                 <input
                   id="sim-desc"
                   type="text"
                   value={simDesc}
                   onChange={(e) => setSimDesc(e.target.value)}
-                  placeholder="Örn: Yeni sözleşme, prim"
+                  placeholder={t('chart.simDescPlaceholder', {}, 'Örn: Yeni sözleşme, prim')}
                   className="w-full text-xs font-semibold px-2 sm:px-2.5 py-1.5 sm:py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 outline-none focus:ring-1 focus:ring-purple-500"
                 />
               </div>
@@ -769,7 +779,7 @@ export function CashFlowForecastChart({
                 <button
                   type="submit"
                   className="w-full flex items-center justify-center p-1.5 sm:p-2 rounded-lg bg-purple-600 hover:bg-purple-700 text-white font-bold transition-all shadow hover:shadow-md cursor-pointer h-8 sm:h-9"
-                  title="İşlem Ekle"
+                  title={t('chart.simAddBtnTooltip', {}, 'İşlem Ekle')}
                 >
                   <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
                 </button>
@@ -797,7 +807,7 @@ export function CashFlowForecastChart({
                         type="button"
                         onClick={() => handleDeleteSimulatedItem(item.id)}
                         className="rounded-full p-0.5 hover:bg-gray-250 dark:hover:bg-slate-800 text-gray-400 hover:text-red-500 shrink-0 transition-colors cursor-pointer"
-                        title="Sil"
+                        title={t('general.delete', {}, 'Sil')}
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -806,8 +816,8 @@ export function CashFlowForecastChart({
                 })}
               </div>
             ) : (
-              <div className="text-center py-4 text-xs text-gray-400 dark:text-gray-500 border border-dashed dark:border-white/5 rounded-xl">
-                Henüz simüle edilmiş işlem bulunmuyor. Yukarıdaki formdan ekleyebilirsiniz.
+              <div className="text-center py-6 text-gray-400 dark:text-gray-500 text-xs border border-dashed dark:border-white/5 rounded-xl bg-white dark:bg-slate-900">
+                {t('chart.noSimulatedItems', {}, 'Henüz simüle edilmiş işlem bulunmuyor. Yukarıdaki formdan ekleyebilirsiniz.')}
               </div>
             )}
           </div>
@@ -818,10 +828,10 @@ export function CashFlowForecastChart({
           <div className="border-t dark:border-white/5 pt-6 space-y-4 animate-in fade-in duration-200">
             <h4 className="text-sm font-bold flex items-center gap-1.5 text-gray-800 dark:text-white">
               <Target className="w-4.5 h-4.5 text-blue-600 dark:text-blue-400" />
-              Tasarruf Hedefleri & Nakit Akışı Uyumluluk Analizi
+              {t('chart.savingsAnalysisTitle', {}, 'Tasarruf Hedefleri & Nakit Akışı Uyumluluk Analizi')}
             </h4>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Gelecek 6 aylık tahmini nakit akışınıza göre, aktif hedeflerinize vade tarihlerinde ulaşıp ulaşamayacağınız analiz edilmiştir.
+              {t('chart.savingsAnalysisDesc', {}, 'Gelecek 6 aylık tahmini nakit akışınıza göre, aktif hedeflerinize vade tarihlerinde ulaşıp ulaşamayacağınız analiz edilmiştir.')}
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -850,20 +860,20 @@ export function CashFlowForecastChart({
                           ? 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20'
                           : 'bg-gray-500/10 text-gray-500 dark:text-gray-400 border border-gray-500/20'
                       }`}>
-                        {goal.status === 'feasible' && 'Ulaşılabilir'}
-                        {goal.status === 'at_risk' && 'Risk Altında'}
-                        {goal.status === 'overdue' && 'Süresi Geçmiş'}
-                        {goal.status === 'long_term' && 'Uzun Vadeli'}
+                        {goal.status === 'feasible' && t('chart.statusFeasible', {}, 'Ulaşılabilir')}
+                        {goal.status === 'at_risk' && t('chart.statusAtRisk', {}, 'Risk Altında')}
+                        {goal.status === 'overdue' && t('chart.statusOverdue', {}, 'Süresi Geçmiş')}
+                        {goal.status === 'long_term' && t('chart.statusLongTerm', {}, 'Uzun Vadeli')}
                       </span>
                     </div>
                     
                     <div className="grid grid-cols-2 gap-3 pt-1 text-[11px]">
                       <div>
-                        <span className="text-gray-500 dark:text-gray-400 block">Kalan Hedef Tutar:</span>
+                        <span className="text-gray-500 dark:text-gray-400 block">{t('chart.remainingGoalAmount', {}, 'Kalan Hedef Tutar:')}</span>
                         <span className="font-bold text-gray-800 dark:text-slate-200">{formatCurrency(goal.remaining)}</span>
                       </div>
                       <div>
-                        <span className="text-gray-500 dark:text-gray-400 block">Vade Tarihi:</span>
+                        <span className="text-gray-500 dark:text-gray-400 block">{t('chart.dueDateLabel', {}, 'Vade Tarihi:')}</span>
                         <span className="font-bold text-gray-800 dark:text-slate-200">{goal.targetMonthLabel || goal.targetDate}</span>
                       </div>
                     </div>
@@ -874,7 +884,7 @@ export function CashFlowForecastChart({
                       <p className="flex items-start gap-1.5">
                         <span className="text-green-500 font-bold">✓</span>
                         <span>
-                          Vade ayında ({goal.targetMonthLabel}) öngörülen kasanız <strong>{formatCurrency(goal.projectedBalanceAtGoal)}</strong>, kalan hedefinizden fazla. Bu hedefi rahatlıkla karşılayabilirsiniz.
+                          {t('chart.descFeasible', { month: goal.targetMonthLabel, balance: formatCurrency(goal.projectedBalanceAtGoal) }, `Vade ayında (${goal.targetMonthLabel}) öngörülen kasanız ${formatCurrency(goal.projectedBalanceAtGoal)}, kalan hedefinizden fazla. Bu hedefi rahatlıkla karşılayabilirsiniz.`)}
                         </span>
                       </p>
                     )}
@@ -883,24 +893,24 @@ export function CashFlowForecastChart({
                         <p className="flex items-start gap-1.5 text-amber-600 dark:text-amber-400">
                           <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0 animate-pulse" />
                           <span>
-                            Vade ayında ({goal.targetMonthLabel}) kasanızın <strong>{formatCurrency(goal.projectedBalanceAtGoal)}</strong> olması öngörülüyor. Hedefi tamamlamak için <strong>{formatCurrency(goal.remaining - goal.projectedBalanceAtGoal)}</strong> açığınız kalabilir.
+                            {t('chart.descAtRisk', { month: goal.targetMonthLabel, balance: formatCurrency(goal.projectedBalanceAtGoal), deficit: formatCurrency(goal.remaining - goal.projectedBalanceAtGoal) }, `Vade ayında (${goal.targetMonthLabel}) kasanızın ${formatCurrency(goal.projectedBalanceAtGoal)} olması öngörülüyor. Hedefi tamamlamak için ${formatCurrency(goal.remaining - goal.projectedBalanceAtGoal)} açığınız kalabilir.`)}
                           </span>
                         </p>
                         <p className="bg-amber-500/5 p-2 rounded border border-amber-500/10 text-gray-700 dark:text-gray-300">
-                          💡 <strong>Katkı Önerisi:</strong> Kalan {Math.max(1, goal.monthsDiff)} ay boyunca her ay ortalama en az <strong>{formatCurrency(goal.suggestedMonthly)}</strong> ek tasarruf yapmanız veya simülasyona ek gelir senaryosu eklemeniz önerilir.
+                          {t('chart.suggestedContribution', { months: Math.max(1, goal.monthsDiff), amount: formatCurrency(goal.suggestedMonthly) }, `💡 <strong>Katkı Önerisi:</strong> Kalan ${Math.max(1, goal.monthsDiff)} ay boyunca her ay ortalama en az <strong>{formatCurrency(goal.suggestedMonthly)}</strong> ek tasarruf yapmanız veya simülasyona ek gelir senaryosu eklemeniz önerilir.`)}
                         </p>
                       </div>
                     )}
                     {goal.status === 'overdue' && (
                       <p className="flex items-start gap-1.5 text-red-500">
                         <AlertTriangle className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                        <span>Hedefinizin vadesi geçmiş durumda. Hedef tarihini güncelleyerek yeniden analiz alabilirsiniz.</span>
+                        <span>{t('chart.descOverdue', {}, 'Hedefinizin vadesi geçmiş durumda. Hedef tarihini güncelleyerek yeniden analiz alabilirsiniz.')}</span>
                       </p>
                     )}
                     {goal.status === 'long_term' && (
                       <p className="flex items-start gap-1.5 text-gray-500">
                         <Info className="w-3.5 h-3.5 mt-0.5 shrink-0" />
-                        <span>Hedef vadeniz 6 aydan uzun olduğu için nakit akışı grafiğinde doğrudan analiz edilmemiştir.</span>
+                        <span>{t('chart.descLongTerm', {}, 'Hedef vadeniz 6 aydan uzun olduğu için nakit akışı grafiğinde doğrudan analiz edilmemiştir.')}</span>
                       </p>
                     )}
                   </div>

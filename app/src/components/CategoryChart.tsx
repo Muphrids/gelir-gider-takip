@@ -3,6 +3,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import type { CategorySummary } from '@/types';
 import { formatCurrency } from '@/lib/utils';
 import { PieChart as PieChartIcon } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CategoryChartProps {
   data: CategorySummary[];
@@ -11,8 +12,10 @@ interface CategoryChartProps {
 }
 
 export function CategoryChart({ data, title, type }: CategoryChartProps) {
+  const { t } = useLanguage();
+
   const chartData = data.map(item => ({
-    name: item.categoryName,
+    name: t(`category.${item.categoryName}`, {}, item.categoryName),
     value: item.totalAmount,
     color: item.categoryColor,
     percentage: item.percentage,
@@ -32,7 +35,7 @@ export function CategoryChart({ data, title, type }: CategoryChartProps) {
         <CardContent>
           <div className="text-center py-8 text-gray-500">
             <PieChartIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>Henüz veri bulunmuyor.</p>
+            <p>{t('chart.noData', {}, 'Henüz veri bulunmuyor.')}</p>
           </div>
         </CardContent>
       </Card>
@@ -97,7 +100,7 @@ export function CategoryChart({ data, title, type }: CategoryChartProps) {
                   className="w-3 h-3 rounded-full"
                   style={{ backgroundColor: item.categoryColor }}
                 />
-                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.categoryName}</span>
+                <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{t(`category.${item.categoryName}`, {}, item.categoryName)}</span>
               </div>
               <div className="text-right">
                 <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -113,7 +116,7 @@ export function CategoryChart({ data, title, type }: CategoryChartProps) {
 
         <div className="mt-4 pt-3 border-t">
           <div className="flex justify-between items-center">
-            <span className="font-medium">Toplam</span>
+            <span className="font-medium">{t('general.total', {}, 'Toplam')}</span>
             <span className={`font-bold ${
               type === 'income' ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'
             }`}>

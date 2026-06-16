@@ -177,7 +177,7 @@ export function RecurringTransactionForm({ categories, activeCurrency = 'TRY', o
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: category.color }}
                       />
-                      {category.name}
+                      {t(`category.${category.name}`, {}, category.name)}
                     </div>
                   </SelectItem>
                 ))}

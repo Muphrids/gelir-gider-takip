@@ -226,7 +226,7 @@ export function TransactionForm({ categories, transactions, activeCurrency = 'TR
                       className="w-2 h-2 rounded-full border border-black/10 shrink-0"
                       style={{ backgroundColor: template.color }}
                     />
-                    {template.name} {template.amount ? `(${template.amount})` : ''}
+                    {t(`category.${template.name}`, {}, template.name)} {template.amount ? `(${template.amount})` : ''}
                   </button>
                 ))}
               </div>
@@ -298,7 +298,7 @@ export function TransactionForm({ categories, transactions, activeCurrency = 'TR
                         className="w-3 h-3 rounded-full"
                         style={{ backgroundColor: category.color }}
                       />
-                      {category.name}
+                      {t(`category.${category.name}`, {}, category.name)}
                     </div>
                   </SelectItem>
                 ))}

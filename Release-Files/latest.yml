@@ -1,8 +1,8 @@
-version: 1.1.5
+version: 1.1.6
 files:
-  - url: Gelir-Gider-Takip-Setup-1.1.5.exe
-    sha512: 6p8ddl6MbH1b2/dbl+jN4Z4tSbAdMd93t3/Yq+umttNe99ny1oncxIK+LOLVEBuFrPfoHS9tglFTyP+7Se54gw==
-    size: 101104531
-path: Gelir-Gider-Takip-Setup-1.1.5.exe
-sha512: 6p8ddl6MbH1b2/dbl+jN4Z4tSbAdMd93t3/Yq+umttNe99ny1oncxIK+LOLVEBuFrPfoHS9tglFTyP+7Se54gw==
-releaseDate: '2026-06-15T20:32:45.725Z'
+  - url: Gelir-Gider-Takip-Setup-1.1.6.exe
+    sha512: 95q3wo2LMVVtnqEli7+QVNcLw7yjVlQCG+msX1596OSl1TOOiZUqZfNtJwfF/MHdjNFW2IDbry1IHf+DgFrhRA==
+    size: 101109622
+path: Gelir-Gider-Takip-Setup-1.1.6.exe
+sha512: 95q3wo2LMVVtnqEli7+QVNcLw7yjVlQCG+msX1596OSl1TOOiZUqZfNtJwfF/MHdjNFW2IDbry1IHf+DgFrhRA==
+releaseDate: '2026-06-16T14:18:15.158Z'

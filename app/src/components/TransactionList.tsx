@@ -133,7 +133,7 @@ export function TransactionList({
     const query = searchTerm.trim().toLowerCase();
     if (!query) return transactions;
 
-    const categoryMap = new Map(categories.map((c) => [c.id, c.name.toLowerCase()]));
+    const categoryMap = new Map(categories.map((c) => [c.id, t('category.' + c.name, {}, c.name).toLowerCase()]));
 
     return transactions.filter((t) => {
       const categoryName = categoryMap.get(t.categoryId) || '';
@@ -164,7 +164,7 @@ export function TransactionList({
       return [
         formatShortDate(tx.date),
         getProjectName(tx.projectId),
-        cat?.name || t('general.unknown'),
+        t('category.' + cat?.name, {}, cat?.name || t('general.unknown')),
         (tx.description || '').replace(/"/g, '""'),
         tx.paymentMethod === 'cash' ? t('general.cash') : tx.paymentMethod === 'credit_card' ? t('general.creditCard') : t('general.none'),
         tx.type === 'income' ? t('general.income') : t('general.expense'),
@@ -262,7 +262,7 @@ export function TransactionList({
                             style={{ backgroundColor: category?.color || '#6b7280' }}
                           />
                           <span className="truncate max-w-[120px]">
-                            {category?.name || 'Bilinmeyen'}
+                            {t('category.' + category?.name, {}, category?.name || t('general.unknown', {}, 'Bilinmeyen'))}
                           </span>
                         </div>
                       </TableCell>
@@ -285,7 +285,11 @@ export function TransactionList({
                               </span>
                             )}
                             {transaction.paymentMethod && (
-                              <span className="inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-full w-fit border bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-350 border-slate-200 dark:border-white/10">
+                              <span className={`inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded-full w-fit border ${
+                                transaction.paymentMethod === 'cash'
+                                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40'
+                                  : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/40'
+                              }`}>
                                 {transaction.paymentMethod === 'cash' ? t('general.cashEmoji') : t('general.cardEmoji')}
                               </span>
                             )}
@@ -431,7 +435,7 @@ export function TransactionList({
                           className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: category.color }}
                         />
-                        {category.name}
+                        {t('category.' + category.name, {}, category.name)}
                       </div>
                     </SelectItem>
                   ))}

@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Trash2, Repeat, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
+import { useLanguage } from '@/contexts/LanguageContext';
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ export function RecurringTransactionManager({
   onDelete,
 }: RecurringTransactionManagerProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const { t } = useLanguage();
 
   const getCategory = (categoryId: string) => {
     return categories.find(c => c.id === categoryId);
@@ -45,7 +47,7 @@ export function RecurringTransactionManager({
       <CardHeader className="pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <Repeat className="w-5 h-5 text-blue-600" />
-          Sabit İşlem Yöneticisi
+          {t('rec.title', {}, 'Sabit İşlem Yöneticisi')}
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -53,7 +55,7 @@ export function RecurringTransactionManager({
           {recurringTransactions.length === 0 ? (
             <div className="text-center py-8 text-gray-500 text-sm">
               <Repeat className="w-8 h-8 mx-auto mb-2 text-gray-300" />
-              Henüz sabit işlem tanımlanmamış.
+              {t('rec.noItems', {}, 'Henüz sabit işlem tanımlanmamış.')}
             </div>
           ) : (
             recurringTransactions.map((rec) => {
@@ -73,7 +75,7 @@ export function RecurringTransactionManager({
                     </div>
                     <div className="min-w-0">
                       <p className="font-semibold text-sm text-gray-900 dark:text-white truncate">
-                        {rec.description || 'Açıklamasız Sabit İşlem'}
+                        {rec.description || t('rec.noDescription', {}, 'Açıklamasız Sabit İşlem')}
                       </p>
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-gray-500 mt-0.5">
                         <span
@@ -83,16 +85,20 @@ export function RecurringTransactionManager({
                             color: category?.color || '#475569',
                           }}
                         >
-                          {category?.name || 'Kategorisiz'}
+                          {t(`category.${category?.name}`, {}, category?.name || t('rec.uncategorized', {}, 'Kategorisiz'))}
                         </span>
                         {rec.paymentMethod && (
-                          <span className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-gray-100 text-gray-700 dark:bg-slate-800 dark:text-gray-300">
-                            {rec.paymentMethod === 'cash' ? '💵 Nakit' : '💳 Kredi Kartı'}
+                          <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium border ${
+                            rec.paymentMethod === 'cash'
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40'
+                              : 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-800/40'
+                          }`}>
+                            {rec.paymentMethod === 'cash' ? t('general.cashEmoji', {}, '💵 Nakit') : t('general.cardEmoji', {}, '💳 Kredi Kartı')}
                           </span>
                         )}
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3 text-gray-400" />
-                          Her Ayın {new Date(rec.startDate).getDate()}'i
+                          {t('rec.monthlyDay', { day: new Date(rec.startDate).getDate() }, `Her Ayın ${new Date(rec.startDate).getDate()}'i`)}
                         </span>
                       </div>
                     </div>
@@ -111,7 +117,7 @@ export function RecurringTransactionManager({
                       <Switch
                         checked={rec.isActive}
                         onCheckedChange={(checked) => onToggleActive(rec.id, checked)}
-                        aria-label="Aktif/Pasif"
+                        aria-label={t('general.active', {}, 'Aktif') + '/' + t('general.passive', {}, 'Pasif')}
                       />
                       <Button
                         variant="ghost"
@@ -133,17 +139,17 @@ export function RecurringTransactionManager({
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Sabit İşlemi Sil</DialogTitle>
+            <DialogTitle>{t('rec.deleteTitle', {}, 'Sabit İşlemi Sil')}</DialogTitle>
             <DialogDescription>
-              Bu sabit işlemi silmek istediğinizden emin misiniz? Artık bu işlem her ay otomatik olarak eklenmeyecektir.
+              {t('rec.deleteDesc', {}, 'Bu sabit işlemi silmek istediğinizden emin misiniz? Artık bu işlem her ay otomatik olarak eklenmeyecektir.')}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDeleteId(null)}>
-              İptal
+              {t('general.cancel', {}, 'İptal')}
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
-              Sil
+              {t('general.delete', {}, 'Sil')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { formatCurrency } from '@/lib/utils';
 import { PieChart as PieChartIcon, TrendingUp, TrendingDown } from 'lucide-react';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface OverallChartProps {
   totalIncome: number;
@@ -10,14 +11,16 @@ interface OverallChartProps {
 }
 
 export function OverallChart({ totalIncome, totalExpense, title = 'Gelir vs Gider' }: OverallChartProps) {
+  const { t } = useLanguage();
+
   const chartData = [
     {
-      name: 'Gelir',
+      name: t('general.income', {}, 'Gelir'),
       value: totalIncome,
       color: '#22c55e',
     },
     {
-      name: 'Gider',
+      name: t('general.expense', {}, 'Gider'),
       value: totalExpense,
       color: '#ef4444',
     },
@@ -38,7 +41,7 @@ export function OverallChart({ totalIncome, totalExpense, title = 'Gelir vs Gide
         <CardContent>
           <div className="text-center py-8 text-gray-500">
             <PieChartIcon className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>Henüz veri bulunmuyor.</p>
+            <p>{t('chart.noData', {}, 'Henüz veri bulunmuyor.')}</p>
           </div>
         </CardContent>
       </Card>
@@ -116,7 +119,7 @@ export function OverallChart({ totalIncome, totalExpense, title = 'Gelir vs Gide
           <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
             <div className="flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-green-600" />
-              <span className="font-medium">Toplam Gelir</span>
+              <span className="font-medium">{t('summary.totalIncome', {}, 'Toplam Gelir')}</span>
             </div>
             <span className="font-bold text-green-600">
               {formatCurrency(totalIncome)}
@@ -126,7 +129,7 @@ export function OverallChart({ totalIncome, totalExpense, title = 'Gelir vs Gide
           <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
             <div className="flex items-center gap-2">
               <TrendingDown className="w-4 h-4 text-red-600" />
-              <span className="font-medium">Toplam Gider</span>
+              <span className="font-medium">{t('summary.totalExpense', {}, 'Toplam Gider')}</span>
             </div>
             <span className="font-bold text-red-600">
               {formatCurrency(totalExpense)}
@@ -136,7 +139,7 @@ export function OverallChart({ totalIncome, totalExpense, title = 'Gelir vs Gide
           <div className={`flex items-center justify-between p-3 rounded-lg ${
             balance >= 0 ? 'bg-blue-50' : 'bg-orange-50'
           }`}>
-            <span className="font-medium">Net Bakiye</span>
+            <span className="font-medium">{t('summary.netBalance', {}, 'Net Bakiye')}</span>
             <span className={`font-bold ${
               balance >= 0 ? 'text-blue-600' : 'text-orange-600'
             }`}>

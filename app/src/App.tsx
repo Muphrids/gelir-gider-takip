@@ -69,7 +69,7 @@ const PRESET_COLORS = [
   '#06b6d4', '#3b82f6', '#6366f1', '#8b5cf6', '#ec4899',
 ];
 
-const CURRENT_VERSION = 'v1.1.5';
+const CURRENT_VERSION = 'v1.1.6';
 
 function MainApp() {
   const { t, language, setLanguage } = useLanguage();
@@ -813,7 +813,7 @@ function MainApp() {
   // Handle transaction delete
   const handleDeleteTransaction = (id: string) => {
     deleteTransaction(id);
-    toast.success('İşlem silindi');
+    toast.success(t('toast.deleted'));
   };
 
   // Handle savings goal add
@@ -821,7 +821,7 @@ function MainApp() {
     e.preventDefault();
     const amt = parseFloat(goalTarget);
     if (!goalName.trim() || isNaN(amt) || amt <= 0 || !goalDate) {
-      toast.error('Lütfen tüm zorunlu alanları geçerli değerlerle doldurun.');
+      toast.error(t('toast.fillFields'));
       return;
     }
     addSavingsGoal({
@@ -835,7 +835,7 @@ function MainApp() {
     setGoalTarget('');
     setGoalDate('');
     setGoalProject(selectedProject || '');
-    toast.success('Finansal hedef başarıyla belirlendi.');
+    toast.success(t('toast.saved'));
   };
 
   // Handle add contribution
@@ -843,37 +843,37 @@ function MainApp() {
     const amountStr = contributions[goalId] || '';
     const amt = parseFloat(amountStr);
     if (isNaN(amt) || amt <= 0) {
-      toast.error('Lütfen geçerli bir katkı tutarı girin.');
+      toast.error(t('toast.invalidContribution'));
       return;
     }
     const newVal = Math.min(maxVal, currentVal + amt);
     updateSavingsGoal(goalId, { currentAmount: newVal });
     setContributions(prev => ({ ...prev, [goalId]: '' }));
-    toast.success('Hedef birikimine başarıyla katkıda bulunuldu.');
+    toast.success(t('toast.contributionSuccess'));
   };
 
   // Handle category add
   const handleAddCategory = (categoryData: Omit<import('@/types').Category, 'id'>) => {
     addCategory(categoryData);
-    toast.success('Kategori eklendi');
+    toast.success(t('toast.saved'));
   };
 
   // Handle category delete
   const handleDeleteCategory = (id: string) => {
     deleteCategory(id);
-    toast.success('Kategori silindi');
+    toast.success(t('toast.deleted'));
   };
 
   // Handle project add
   const handleAddProject = (projectData: Omit<import('@/types').Project, 'id' | 'createdAt'>) => {
     addProject(projectData);
-    toast.success('Şirket/Proje eklendi');
+    toast.success(t('toast.saved'));
   };
 
   // Handle project delete
   const handleDeleteProject = (id: string) => {
     deleteProject(id);
-    toast.success('Şirket/Proje silindi');
+    toast.success(t('toast.deleted'));
   };
 
 
@@ -898,7 +898,7 @@ function MainApp() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-gray-50">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600" />
-        <p className="text-sm text-gray-600">Giriş doğrulanıyor...</p>
+        <p className="text-sm text-gray-600">{t('login.verifying')}</p>
       </div>
     );
   }
@@ -1027,10 +1027,10 @@ function MainApp() {
           <div className="bg-white dark:bg-slate-900 border dark:border-white/10 rounded-2xl max-w-lg w-full max-h-[85vh] flex flex-col overflow-hidden shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in duration-200">
             <div className="text-center space-y-1">
               <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center justify-center gap-2">
-                İşlem Yapılacak Şirketi Seçin
+                {t('proj.selectLaunchTitle')}
               </h3>
               <p className="text-xs text-gray-500 dark:text-gray-400">
-                Giriş yapmak ve gelir-gider işlemlerinizi yönetmek istediğiniz şirketi seçin:
+                {t('proj.selectLaunchDesc')}
               </p>
             </div>
 
@@ -1301,12 +1301,12 @@ function MainApp() {
                   activeCurrency={currency}
                   exchangeRates={exchangeRates}
                   title={useCustomRange 
-                    ? 'Seçili Dönem İşlemleri' 
+                    ? t('transactions.selectedPeriodTransactions', {}, 'Seçili Dönem İşlemleri')
                     : viewMode === 'daily' 
-                      ? 'Günlük İşlemler'
-                      : viewMode === 'monthly'
-                        ? 'Aylık İşlemler'
-                        : 'Yıllık İşlemler'
+                      ? t('transactions.dailyTransactions', {}, 'Günlük İşlemler')
+                      : viewMode === 'monthly' 
+                        ? t('transactions.monthlyTransactions', {}, 'Aylık İşlemler')
+                        : t('transactions.yearlyTransactions', {}, 'Yıllık İşlemler')
                   }
                 />
               </div>
@@ -1318,19 +1318,19 @@ function MainApp() {
               className="lg:hidden fixed bottom-6 right-6 z-40 rounded-full px-4 py-2.5 shadow-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-1.5 border border-blue-500/20 h-auto"
             >
               <Plus className="w-5 h-5" />
-              <span className="text-xs font-bold whitespace-nowrap">İşlem Ekle</span>
+              <span className="text-xs font-bold whitespace-nowrap">{t('general.addTransaction')}</span>
             </Button>
 
             {/* Dialog Form for Mobile */}
             <Dialog open={isMobileFormOpen} onOpenChange={setIsMobileFormOpen}>
               <DialogContent className="max-w-md w-[95vw] rounded-xl overflow-y-auto max-h-[90vh] bg-slate-900 text-white border-white/10 p-4">
                 <DialogHeader className="pb-2">
-                  <DialogTitle className="text-lg font-bold text-center">İşlem Ekle</DialogTitle>
+                  <DialogTitle className="text-lg font-bold text-center">{t('general.addTransaction')}</DialogTitle>
                 </DialogHeader>
                 <Tabs defaultValue="single" className="space-y-4">
                   <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="single">Tek Seferlik</TabsTrigger>
-                    <TabsTrigger value="recurring">Tekrarlı İşlem</TabsTrigger>
+                    <TabsTrigger value="single">{t('general.single')}</TabsTrigger>
+                    <TabsTrigger value="recurring">{t('general.recurring')}</TabsTrigger>
                   </TabsList>
                   <TabsContent value="single" className="mt-0">
                     <TransactionForm
@@ -1371,42 +1371,42 @@ function MainApp() {
                     <CardTitle className="text-base flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Target className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-                        <span>Yeni Hedef Belirle</span>
+                        <span>{t('goals.newGoal', {}, 'Yeni Hedef Belirle')}</span>
                       </div>
-                      <span className="lg:hidden text-xs text-blue-500 font-semibold">{isGoalFormExpanded ? 'Göster/Gizle' : 'Göster/Gizle'}</span>
+                      <span className="lg:hidden text-xs text-blue-500 font-semibold">{t('general.showHide', {}, 'Göster/Gizle')}</span>
                     </CardTitle>
                   </CardHeader>
                   <div className={isGoalFormExpanded ? 'block' : 'hidden lg:block'}>
                     <CardContent>
                       <form onSubmit={handleAddSavingsGoalSubmit} className="space-y-4">
                         <div className="space-y-1.5">
-                          <Label htmlFor="goal-name-input" className="text-xs font-semibold">Hedef Adı *</Label>
+                          <Label htmlFor="goal-name-input" className="text-xs font-semibold">{t('goals.nameLabel', {}, 'Hedef Adı *')}</Label>
                           <input
                             id="goal-name-input"
                             type="text"
                             value={goalName}
                             onChange={(e) => setGoalName(e.target.value)}
-                            placeholder="Örn: Yeni Bilgisayar, Tatil..."
+                            placeholder={t('goals.namePlaceholder', {}, 'Örn: Yeni Bilgisayar, Tatil...')}
                             className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                             required
                           />
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label htmlFor="goal-target-input" className="text-xs font-semibold">Hedef Tutar ({getCurrencySymbol()}) *</Label>
+                          <Label htmlFor="goal-target-input" className="text-xs font-semibold">{t('goals.targetLabel', { symbol: getCurrencySymbol() }, `Hedef Tutar (${getCurrencySymbol()}) *`)}</Label>
                           <input
                             id="goal-target-input"
                             type="number"
                             value={goalTarget}
                             onChange={(e) => setGoalTarget(e.target.value)}
-                            placeholder="Örn: 50000"
+                            placeholder={t('goals.targetPlaceholder', {}, 'Örn: 50000')}
                             className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-500"
                             required
                           />
                         </div>
 
                         <div className="space-y-1.5">
-                          <Label htmlFor="goal-date-input" className="text-xs font-semibold">Hedef Tarihi *</Label>
+                          <Label htmlFor="goal-date-input" className="text-xs font-semibold">{t('goals.dateLabel', {}, 'Hedef Tarihi *')}</Label>
                           <input
                             id="goal-date-input"
                             type="date"
@@ -1419,14 +1419,14 @@ function MainApp() {
 
                         {data.projects.length > 0 && (
                           <div className="space-y-1.5">
-                            <Label htmlFor="goal-project-select" className="text-xs font-semibold">Şirket / Proje İlişkisi</Label>
+                            <Label htmlFor="goal-project-select" className="text-xs font-semibold">{t('goals.projectAssociation', {}, 'Şirket / Proje İlişkisi')}</Label>
                             <select
                               id="goal-project-select"
                               value={goalProject}
                               onChange={(e) => setGoalProject(e.target.value)}
                               className="w-full px-3 py-2 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800 text-sm outline-none focus:ring-2 focus:ring-blue-500 text-gray-700 dark:text-white"
                             >
-                              <option value="">🏢 Kişisel (Şirket Dışı)</option>
+                              <option value="">{t('goals.personalOption', {}, '🏢 Kişisel (Şirket Dışı)')}</option>
                               {data.projects.map(proj => (
                                 <option key={proj.id} value={proj.id}>{proj.name}</option>
                               ))}
@@ -1436,7 +1436,7 @@ function MainApp() {
 
                         <Button type="submit" className="w-full font-bold flex items-center justify-center gap-1.5 mt-2 cursor-pointer">
                           <Plus className="w-4 h-4" />
-                          Hedefi Kaydet
+                          {t('goals.saveGoal', {}, 'Hedefi Kaydet')}
                         </Button>
                       </form>
                     </CardContent>
@@ -1448,10 +1448,10 @@ function MainApp() {
               <div className="lg:col-span-2 space-y-4">
                 <div className="flex items-center justify-between">
                   <h3 className="font-bold text-lg text-gray-800 dark:text-white flex items-center gap-2">
-                    🎯 Aktif Finansal Hedefleriniz
+                    {t('goals.activeGoals', {}, '🎯 Aktif Finansal Hedefleriniz')}
                   </h3>
                   <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                    Toplam: {(data.savingsGoals || []).filter(g => !selectedProject || g.projectId === selectedProject).length} Hedef
+                    {t('goals.totalGoals', { count: (data.savingsGoals || []).filter(g => !selectedProject || g.projectId === selectedProject).length }, `Toplam: ${(data.savingsGoals || []).filter(g => !selectedProject || g.projectId === selectedProject).length} Hedef`)}
                   </span>
                 </div>
 
@@ -1478,7 +1478,7 @@ function MainApp() {
                           <Card key={goal.id} className="relative overflow-hidden border dark:border-white/10 dark:bg-slate-900 shadow-sm transition-all hover:shadow-md flex flex-col justify-between">
                             {isAchieved && (
                               <div className="absolute top-0 right-0 bg-green-500 text-white text-[9px] font-bold uppercase tracking-wider py-1 px-3.5 rounded-bl-lg shadow-sm">
-                                Tamamlandı 🎉
+                                {t('goals.completedBadge', {}, 'Tamamlandı 🎉')}
                               </div>
                             )}
 
@@ -1505,7 +1505,7 @@ function MainApp() {
                                   <button
                                     onClick={() => deleteSavingsGoal(goal.id)}
                                     className="text-gray-400 hover:text-red-500 p-1 rounded-lg hover:bg-red-50 dark:hover:bg-red-950/20 transition-all shrink-0 cursor-pointer"
-                                    title="Hedefi Sil"
+                                    title={t('goals.deleteGoal', {}, 'Hedefi Sil')}
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </button>
@@ -1519,7 +1519,7 @@ function MainApp() {
                                     />
                                   </div>
                                   <div className="flex justify-between text-xs font-semibold">
-                                    <span className="text-gray-500 dark:text-gray-400">İlerleme: %{progress}</span>
+                                    <span className="text-gray-500 dark:text-gray-400">{t('goals.progressLabel', { progress }, `İlerleme: %${progress}`)}</span>
                                     <span className={isAchieved ? 'text-green-600' : 'text-blue-600'}>
                                       {formatCurrency(goal.currentAmount)} / {formatCurrency(goal.targetAmount)}
                                     </span>
@@ -1529,12 +1529,12 @@ function MainApp() {
 
                               <div className="space-y-3 pt-3 border-t dark:border-white/5 mt-4 text-xs font-medium">
                                 <div className="flex justify-between">
-                                  <span className="text-gray-500 dark:text-gray-400">Vade Tarihi:</span>
+                                  <span className="text-gray-500 dark:text-gray-400">{t('goals.dueDate', {}, 'Vade Tarihi:')}</span>
                                   <span className="text-gray-800 dark:text-gray-200">
                                     {format(parseISO(goal.targetDate), 'dd.MM.yyyy')}
                                     {!isAchieved && (
                                       <span className={`ml-1 font-bold ${daysLeft > 0 ? (daysLeft <= 30 ? 'text-amber-500' : 'text-gray-500') : 'text-red-500'}`}>
-                                        ({daysLeft > 0 ? `${daysLeft} gün kaldı` : 'Vadesi geçmiş'})
+                                        ({daysLeft > 0 ? t('goals.daysLeft', { count: daysLeft }, `${daysLeft} gün kaldı`) : t('goals.overdue', {}, 'Vadesi geçmiş')})
                                       </span>
                                     )}
                                   </span>
@@ -1542,7 +1542,7 @@ function MainApp() {
 
                                 {!isAchieved && (
                                   <div className="flex justify-between font-bold">
-                                    <span className="text-gray-500 dark:text-gray-400">Kalan Tutar:</span>
+                                    <span className="text-gray-500 dark:text-gray-400">{t('goals.remainingAmount', {}, 'Kalan Tutar:')}</span>
                                     <span className="text-amber-600">{formatCurrency(remaining)}</span>
                                   </div>
                                 )}
@@ -1554,7 +1554,7 @@ function MainApp() {
                                       type="number"
                                       value={contributions[goal.id] || ''}
                                       onChange={(e) => setContributions(prev => ({ ...prev, [goal.id]: e.target.value }))}
-                                      placeholder="Katkı Tutar..."
+                                      placeholder={t('goals.contributionPlaceholder', {}, 'Katkı Tutar...')}
                                       className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-slate-800 outline-none focus:ring-1 focus:ring-blue-500"
                                     />
                                     <button
@@ -1562,7 +1562,7 @@ function MainApp() {
                                       onClick={() => handleAddContributionSubmit(goal.id, goal.currentAmount, goal.targetAmount)}
                                       className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs shadow hover:shadow-md transition-all cursor-pointer flex items-center gap-0.5"
                                     >
-                                      Ekle
+                                      {t('general.add', {}, 'Ekle')}
                                     </button>
                                   </div>
                                 )}
@@ -1575,8 +1575,8 @@ function MainApp() {
                 ) : (
                   <div className="text-center py-16 text-gray-400 dark:text-gray-500 border border-dashed dark:border-white/5 rounded-2xl bg-white dark:bg-slate-900">
                     <Target className="w-12 h-12 text-gray-300 dark:text-slate-800 mx-auto mb-3" />
-                    <p className="text-sm font-semibold">Henüz belirlenmiş hedef bulunmuyor.</p>
-                    <p className="text-xs text-gray-500 mt-1">Yandaki formu kullanarak hayal ettiğiniz birikim hedefini hemen oluşturun!</p>
+                    <p className="text-sm font-semibold">{t('goals.noGoals', {}, 'Henüz belirlenmiş hedef bulunmuyor.')}</p>
+                    <p className="text-xs text-gray-500 mt-1">{t('goals.noGoalsDesc', {}, 'Yandaki formu kullanarak hayal ettiğiniz birikim hedefini hemen oluşturun!')}</p>
                   </div>
                 )}
               </div>
@@ -1611,7 +1611,7 @@ function MainApp() {
 
             <div className="flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center bg-slate-50/50 dark:bg-slate-800/10 p-4 rounded-xl border dark:border-white/5">
               <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">
-                Bu döneme ait mali verileri yüksek çözünürlüklü A4 PDF belgesi veya Türkçe karakter uyumlu Excel/CSV tablosu olarak indirin.
+                {t('reports.downloadDescription', {}, 'Bu döneme ait mali verileri yüksek çözünürlüklü A4 PDF belgesi veya Türkçe karakter uyumlu Excel/CSV tablosu olarak indirin.')}
               </span>
               <div className="flex items-center gap-2 flex-wrap shrink-0">
                 <Button 
@@ -1621,11 +1621,11 @@ function MainApp() {
                   className="flex items-center gap-1.5 font-bold cursor-pointer"
                 >
                   <Download className="w-4 h-4" />
-                  Excel (CSV) Raporu İndir
+                  {t('reports.downloadCSV', {}, 'Excel (CSV) Raporu İndir')}
                 </Button>
                 <Button onClick={() => window.print()} size="sm" className="flex items-center gap-1.5 font-bold cursor-pointer">
                   <Printer className="w-4 h-4" />
-                  PDF Raporu Oluştur (Yazdır)
+                  {t('reports.printPDF', {}, 'PDF Raporu Oluştur (Yazdır)')}
                 </Button>
               </div>
             </div>
@@ -1708,14 +1708,14 @@ function MainApp() {
               <OverallChart
                 totalIncome={totalIncome}
                 totalExpense={totalExpense}
-                title="Gelir vs Gider Dağılımı"
+                title={t('chart.monthlyTrend', {}, 'Gelir vs Gider Dağılımı')}
               />
 
               {/* Income Chart */}
               <div id="reports-income-detail" className="w-full">
                 <CategoryChart
                   data={incomeCategorySummary}
-                  title="Gelir Dağılımı"
+                  title={t('chart.incomeDistribution', {}, 'Gelir Dağılımı')}
                   type="income"
                 />
               </div>
@@ -1724,7 +1724,7 @@ function MainApp() {
               <div id="reports-expense-detail" className="w-full">
                 <CategoryChart
                   data={expenseCategorySummary}
-                  title="Gider Dağılımı"
+                  title={t('chart.expenseDistribution', {}, 'Gider Dağılımı')}
                   type="expense"
                 />
               </div>
@@ -1812,10 +1812,10 @@ function MainApp() {
                       }}
                       className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring dark:bg-slate-800 dark:border-white/10 dark:text-white"
                     >
-                      <option value="TRY">Türk Lirası (₺ - TRY)</option>
-                      <option value="USD">Amerikan Doları ($ - USD)</option>
-                      <option value="EUR">Euro (€ - EUR)</option>
-                      <option value="GBP">İngiliz Sterlini (£ - GBP)</option>
+                      <option value="TRY">{t('currency.try')}</option>
+                      <option value="USD">{t('currency.usd')}</option>
+                      <option value="EUR">{t('currency.eur')}</option>
+                      <option value="GBP">{t('currency.gbp')}</option>
                     </select>
                   </div>
 
@@ -1852,12 +1852,12 @@ function MainApp() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <FileText className="w-5 h-5 text-blue-600" />
-                    Yerel Veri Yedekleme & Geri Yükleme
+                    {t('settings.backupTitle')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <p className="text-xs text-gray-500 dark:text-gray-400">
-                    Yerel verilerinizi JSON dosyası olarak bilgisayarınıza yedekleyebilir veya daha önce aldığınız bir yedek dosyasından verilerinizi geri yükleyebilirsiniz.
+                    {t('settings.backupDesc')}
                   </p>
                   <div className="flex flex-col sm:flex-row gap-3">
                     <Button 
@@ -1866,7 +1866,7 @@ function MainApp() {
                       onClick={handleExportBackup}
                       className="flex-1"
                     >
-                      Yedek İndir (JSON)
+                      {t('settings.backupExport')}
                     </Button>
                     <div className="flex-1 relative">
                       <input
@@ -1882,7 +1882,7 @@ function MainApp() {
                         onClick={() => document.getElementById('backup-upload')?.click()}
                         className="w-full"
                       >
-                        Yedek Yükle (JSON)
+                        {t('settings.backupImport')}
                       </Button>
                     </div>
                   </div>
@@ -2016,53 +2016,53 @@ function MainApp() {
               <Sparkles className="h-6 w-6" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-bold tracking-tight text-foreground dark:text-white">Yeni Güncelleme: v1.1.4</DialogTitle>
-              <p className="text-xs text-muted-foreground mt-0.5">Gelir Gider Takip yenilendi!</p>
+              <DialogTitle className="text-xl font-bold tracking-tight text-foreground dark:text-white">{t('changelog.title')}</DialogTitle>
+              <p className="text-xs text-muted-foreground mt-0.5">{t('changelog.subtitle')}</p>
             </div>
           </DialogHeader>
           <div className="py-4 space-y-4 max-h-[60vh] overflow-y-auto pr-1">
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Uygulamamıza çoklu para birimi ve gelişmiş Excel/CSV raporlama özelliklerini getirdik. İşte v1.1.4 sürümüyle gelen yenilikler:
+              {t('changelog.desc')}
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
               <div className="p-4 rounded-xl bg-secondary/40 border border-border/60 dark:bg-slate-800/40 dark:border-white/5 hover:border-blue-500/30 transition-all">
                 <div className="flex items-center gap-2 font-semibold text-sm mb-1.5 text-blue-500">
                   <span className="w-2 h-2 rounded-full bg-blue-500"></span>
-                  Çoklu Para Birimi Desteği
+                  {t('changelog.multiCurrency')}
                 </div>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  İşlem bazlı döviz seçimi (TRY, USD, EUR) eklendi. Tüm finansal özetleriniz, grafikleriniz ve öngörüleriniz otomatik olarak seçtiğiniz varsayılan para biriminde hesaplanır.
+                  {t('changelog.multiCurrencyDesc')}
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-secondary/40 border border-border/60 dark:bg-slate-800/40 dark:border-white/5 hover:border-emerald-500/30 transition-all">
                 <div className="flex items-center gap-2 font-semibold text-sm mb-1.5 text-emerald-500">
                   <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  Canlı Döviz Kurları
+                  {t('changelog.liveRates')}
                 </div>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Uygulama açılışında en güncel kurlar internet üzerinden otomatik çekilir, böylece anlık ve doğru bakiye çevrimleri yapılır. Çevrimdışı çalışırken ise güvenli varsayılan kurlar kullanılır.
+                  {t('changelog.liveRatesDesc')}
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-secondary/40 border border-border/60 dark:bg-slate-800/40 dark:border-white/5 hover:border-violet-500/30 transition-all">
                 <div className="flex items-center gap-2 font-semibold text-sm mb-1.5 text-violet-500">
                   <span className="w-2 h-2 rounded-full bg-violet-500"></span>
-                  Excel (CSV) Dışa Aktarım
+                  {t('changelog.export')}
                 </div>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Raporlar sekmesinden tüm işlem dökümlerinizi Türkçe karakter ve UTF-8 BOM uyumlu olarak Excel'e (CSV) tek tıkla aktarabilirsiniz.
+                  {t('changelog.exportDesc')}
                 </p>
               </div>
 
               <div className="p-4 rounded-xl bg-secondary/40 border border-border/60 dark:bg-slate-800/40 dark:border-white/5 hover:border-amber-500/30 transition-all">
                 <div className="flex items-center gap-2 font-semibold text-sm mb-1.5 text-amber-500">
                   <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                  Hata Düzeltmeleri & Grafik Düzeltimi
+                  {t('changelog.fixes')}
                 </div>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Kasa akışı simülasyon grafiğindeki görsel kesik çizgi hatası giderildi, şablon hedeflerinin filtre senkronizasyonu mükemmelleştirildi.
+                  {t('changelog.fixesDesc')}
                 </p>
               </div>
             </div>

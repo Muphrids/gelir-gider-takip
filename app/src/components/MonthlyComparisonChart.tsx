@@ -14,6 +14,7 @@ import { generateMonthlySummary, formatCurrency, getCurrencySymbol } from '@/lib
 import type { Transaction } from '@/types';
 import { BarChart3 } from 'lucide-react';
 import { parseISO } from 'date-fns';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface MonthlyComparisonChartProps {
   transactions: Transaction[];
@@ -21,19 +22,19 @@ interface MonthlyComparisonChartProps {
   projectId?: string | null;
 }
 
-const MONTH_NAMES = [
-  'Ocak',
-  'Şubat',
-  'Mart',
-  'Nisan',
-  'Mayıs',
-  'Haziran',
-  'Temmuz',
-  'Ağustos',
-  'Eylül',
-  'Ekim',
-  'Kasım',
-  'Aralık',
+const MONTH_KEYS = [
+  'month.jan',
+  'month.feb',
+  'month.mar',
+  'month.apr',
+  'month.may',
+  'month.jun',
+  'month.jul',
+  'month.aug',
+  'month.sep',
+  'month.oct',
+  'month.nov',
+  'month.dec',
 ];
 
 export function MonthlyComparisonChart({
@@ -41,6 +42,7 @@ export function MonthlyComparisonChart({
   selectedDate,
   projectId,
 }: MonthlyComparisonChartProps) {
+  const { t } = useLanguage();
   // Extract year from selectedDate
   const year = useMemo(() => {
     try {
@@ -60,12 +62,12 @@ export function MonthlyComparisonChart({
   const chartData = useMemo(() => {
     const monthlySummary = generateMonthlySummary(projectTransactions, year);
     return monthlySummary.map((summary) => ({
-      name: MONTH_NAMES[summary.month - 1],
+      name: t(MONTH_KEYS[summary.month - 1]),
       Gelir: summary.totalIncome,
       Gider: summary.totalExpense,
       Bakiye: summary.balance,
     }));
-  }, [projectTransactions, year]);
+  }, [projectTransactions, year, t]);
 
   const hasData = useMemo(() => {
     return chartData.some((d) => d.Gelir > 0 || d.Gider > 0);
@@ -92,15 +94,15 @@ export function MonthlyComparisonChart({
           <p className="font-semibold text-gray-900 mb-1">{label} ({year})</p>
           <div className="space-y-1 text-sm">
             <p className="text-green-600 flex items-center justify-between gap-8">
-              <span>Gelir:</span>
+              <span>{t('general.income', {}, 'Gelir')}:</span>
               <span className="font-semibold">{formatCurrency(payload[0].value)}</span>
             </p>
             <p className="text-red-600 flex items-center justify-between gap-8">
-              <span>Gider:</span>
+              <span>{t('general.expense', {}, 'Gider')}:</span>
               <span className="font-semibold">{formatCurrency(payload[1].value)}</span>
             </p>
             <p className="text-blue-600 flex items-center justify-between gap-8 border-t pt-1 mt-1">
-              <span>Bakiye:</span>
+              <span>{t('summary.netBalance', {}, 'Bakiye')}:</span>
               <span className="font-semibold">
                 {formatCurrency(payload[0].value - payload[1].value)}
               </span>
@@ -117,20 +119,20 @@ export function MonthlyComparisonChart({
       <CardHeader className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3">
         <CardTitle className="text-lg flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-blue-600" />
-          Aylık Karşılaştırmalı Trend ({year})
+          {t('chart.monthlyComparisonTitle', {}, 'Aylık Karşılaştırmalı Trend')} ({year})
         </CardTitle>
         {hasData && (
           <div className="flex items-center gap-3 text-xs font-medium bg-gray-50 dark:bg-slate-800/40 p-2 rounded-lg border border-gray-200 dark:border-white/10">
             <span className="text-green-600 dark:text-green-400">
-              Yıllık Gelir: {formatCurrency(yearlyTotals.income)}
+              {t('chart.yearlyIncome', {}, 'Yıllık Gelir')}: {formatCurrency(yearlyTotals.income)}
             </span>
             <span className="text-gray-300 dark:text-slate-700">|</span>
             <span className="text-red-600 dark:text-red-400">
-              Yıllık Gider: {formatCurrency(yearlyTotals.expense)}
+              {t('chart.yearlyExpense', {}, 'Yıllık Gider')}: {formatCurrency(yearlyTotals.expense)}
             </span>
             <span className="text-gray-300 dark:text-slate-700">|</span>
             <span className={yearlyBalance >= 0 ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}>
-              Net: {formatCurrency(yearlyBalance)}
+              {t('chart.net', {}, 'Net')}: {formatCurrency(yearlyBalance)}
             </span>
           </div>
         )}
@@ -139,7 +141,7 @@ export function MonthlyComparisonChart({
         {!hasData ? (
           <div className="text-center py-12 text-gray-500 text-sm">
             <BarChart3 className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-            <p>{year} yılı için henüz gelir veya gider verisi bulunmuyor.</p>
+            <p>{t('chart.noDataForYear', { year }, `${year} yılı için henüz gelir veya gider verisi bulunmuyor.`)}</p>
           </div>
         ) : (
           <div className="h-80 w-full">
@@ -164,8 +166,8 @@ export function MonthlyComparisonChart({
                 />
                 <Tooltip content={<CustomTooltip />} cursor={{ fill: '#f3f4f6', opacity: 0.4 }} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: 12 }} />
-                <Bar dataKey="Gelir" fill="#22c55e" radius={[4, 4, 0, 0]} maxBarSize={40} />
-                <Bar dataKey="Gider" fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="Gelir" name={t('general.income', {}, 'Gelir')} fill="#22c55e" radius={[4, 4, 0, 0]} maxBarSize={40} />
+                <Bar dataKey="Gider" name={t('general.expense', {}, 'Gider')} fill="#ef4444" radius={[4, 4, 0, 0]} maxBarSize={40} />
               </BarChart>
             </ResponsiveContainer>
           </div>

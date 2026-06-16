@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabaseClient';
 import { toast } from 'sonner';
 import type { AppData } from '@/types';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export interface UseCloudSyncResult {
   localStatus: 'idle' | 'loading' | 'success' | 'error';
@@ -22,6 +23,7 @@ export function useCloudSync(
   signOut: () => Promise<void>,
   currentUser: string | null
 ): UseCloudSyncResult {
+  const { t } = useLanguage();
   const [localStatus, setLocalStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
   const [localError, setLocalError] = useState<string | null>(null);
   const [securityMessage, setSecurityMessage] = useState<string | null>(null);
@@ -52,7 +54,7 @@ export function useCloudSync(
       setIsOnline(true);
       const currentSnapshot = JSON.stringify(data);
       if (user && supabase && lastUploadedSnapshotRef.current && lastUploadedSnapshotRef.current !== currentSnapshot) {
-        toast.info('İnternet bağlantısı sağlandı, bekleyen değişiklikler yükleniyor...');
+        toast.info(t('toast.connectionRestored'));
         void handleUpload();
       }
     };
@@ -71,7 +73,7 @@ export function useCloudSync(
     if (!supabase || !user || user.id !== currentUser) return;
     if (typeof navigator !== 'undefined' && !navigator.onLine) {
       setLocalStatus('error');
-      setLocalError('Çevrimdışı durumdasınız. Bağlantı geldiğinde otomatik eşitlenecek.');
+      setLocalError(t('cloud.offlineError'));
       return;
     }
     try {
@@ -98,7 +100,7 @@ export function useCloudSync(
           lastUploadedSnapshotRef.current = JSON.stringify(cloudData);
           setLocalStatus('success');
           setTimeout(() => setLocalStatus('idle'), 2500);
-          toast.info('Bulutta daha yeni veri tespit edildi, verileriniz senkronize edildi.');
+          toast.info(t('toast.newerDataFound'));
           return;
         }
       }
@@ -160,7 +162,7 @@ export function useCloudSync(
       setTimeout(() => setLocalStatus('idle'), 2500);
     } catch (e: any) {
       setLocalStatus('error');
-      setLocalError(e?.message ?? 'Veriler indirilemedi.');
+      setLocalError(e?.message ?? t('cloud.downloadError'));
     }
   }, [user, currentUser, onDataImport]);
 
@@ -168,9 +170,9 @@ export function useCloudSync(
     if (!supabase || !user || user.id !== currentUser) return;
     setSecurityMessage(null);
 
-    const confirmation = window.prompt("Hesap verilerinizi buluttan ve yerel depolamadan kalıcı olarak silmek istediğinizden emin misiniz?\n\nBu işlem geri alınamaz. Onaylamak için kutuya büyük harflerle 'ONAYLIYORUM' yazın:");
+    const confirmation = window.prompt(t('cloud.deletePrompt'));
     if (confirmation !== 'ONAYLIYORUM') {
-      toast.error('Veri silme işlemi onaylanmadığı için iptal edildi.');
+      toast.error(t('toast.deleteCancelled'));
       return;
     }
 
@@ -188,12 +190,12 @@ export function useCloudSync(
         localStorage.removeItem('gelir-gider-data-' + user.id);
         localStorage.removeItem('gelir-gider-user');
 
-        setSecurityMessage('Buluttaki ve bu cihazdaki verileriniz kalıcı olarak silindi. Hesabınızdan çıkış yapıldı.');
-        toast.success('Bulut ve yerel verileriniz başarıyla temizlendi.');
+        setSecurityMessage(t('cloud.deleteSuccess'));
+        toast.success(t('toast.dataCleared'));
         await signOut();
       }
     } catch (e: any) {
-      setSecurityMessage(e?.message ?? 'Hesap verileri silinemedi.');
+      setSecurityMessage(e?.message ?? t('cloud.deleteFailed'));
     } finally {
       setLocalStatus('idle');
     }
@@ -229,11 +231,11 @@ export function useCloudSync(
               skipNextAutoUploadRef.current = true;
               onDataImport(cloudData);
               lastUploadedSnapshotRef.current = JSON.stringify(cloudData);
-              toast.info('Buluttaki güncel verileriniz eşitlendi.');
+              toast.info(t('toast.cloudSynced'));
             } else if (new Date(localLastUpdated) > new Date(cloudLastUpdated)) {
               // Yerel veri daha yeni, otomatik buluta yükleme tetiklenecek
               lastUploadedSnapshotRef.current = JSON.stringify(cloudData);
-              toast.info('Yerel verileriniz buluttan daha yeni, değişiklikler yükleniyor...');
+              toast.info(t('toast.localNewer'));
             } else {
               // Eşitler, sadece snapshot'ı güncelle
               lastUploadedSnapshotRef.current = JSON.stringify(cloudData);
@@ -300,7 +302,7 @@ export function useCloudSync(
               isHandlingRealtimeRef.current = true;
               onDataImport(incomingData);
               lastUploadedSnapshotRef.current = incomingSnapshot;
-              toast.info('Diğer cihazdan gelen yeni veriler eşitlendi.');
+              toast.info(t('toast.realtimeSynced'));
             }
           } finally {
             setTimeout(() => {
